@@ -1,0 +1,40 @@
+{
+  "name": "stake",
+  "version": "1.0.0",
+  "description": "?",
+  "keywords": [ "?", "?" ],
+  "author": "Robey Pointer <robeypointer@gmail.com>",
+  "homepage": "https://github.com/robey/stake",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/robey/stake.git"
+  },
+  "licenses": [
+    {
+      "type": "Apache License 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+    }
+  ],
+
+  "scripts": {
+    "test": "cake test"
+  },
+  "dependencies": {
+    "glob": "*",
+    "minimatch": "*",
+    "q": "*",
+    "shelljs": "*",
+    "touch": "*"
+  },
+  "devDependencies": {
+    "coffee-script": "*",
+    "mocha": "*",
+    "should": "*"
+  },
+  "main": "./lib/stake",
+  "files": [
+    "Cakefile",
+    "lib",
+    "test"
+  ]
+}
