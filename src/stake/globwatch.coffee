@@ -235,10 +235,6 @@ class GlobWatch extends events.EventEmitter
             @watchFolder f
             @folderChanged(f)
 
-  # if this folder could plausibly be a prefix for an existing pattern,
-  # start watching it.
-  checkInterestingFolder: (folderName) ->
-
   # does this folder match the prefix for an existing watch-pattern?
   folderIsInteresting: (folderName) ->
     folderSegments = folderName.split("/")[0...-1]
