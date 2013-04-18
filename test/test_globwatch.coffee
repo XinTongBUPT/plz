@@ -317,3 +317,18 @@ describe "globwatch", ->
       }
     .fin ->
       g.close()
+
+  it "sees a new matching file even if the folder exists but was empty", fixtures (folder) ->
+    shell.mkdir "-p", "#{folder}/nested/deeper"
+    g = globwatch.globwatch("#{folder}/nested/deeper/*.x")
+    summary = null
+    g.ready.then ->
+      summary = capture(g)
+      fs.writeFileSync "#{folder}/nested/deeper/ten.x", "wheeeeeee"
+      Q.delay(g.interval)
+    .then ->
+      summary.should.eql {
+        added: [ "#{folder}/nested/deeper/ten.x" ]
+      }
+    .fin ->
+      g.close()
