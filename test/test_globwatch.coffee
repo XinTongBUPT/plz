@@ -1,4 +1,5 @@
 fs = require 'fs'
+minimatch = require 'minimatch'
 path = require 'path'
 Q = require 'q'
 shell = require 'shelljs'
@@ -8,16 +9,11 @@ util = require 'util'
 
 test_util = require("./test_util")
 futureTest = test_util.futureTest
+withTempFolder = test_util.withTempFolder
 
 globwatch = require("../lib/stake/globwatch")
 
 dump = (x) -> util.inspect x, false, null, true
-
-withTempFolder = (f) ->
-  uniq = "/tmp/xtestx#{Date.now()}"
-  shell.mkdir "-p", uniq
-  f(uniq).fin ->
-    shell.rm "-r", uniq
 
 makeFixtures = (folder) ->
   past = Date.now() - 1000
@@ -32,10 +28,9 @@ makeFixtures = (folder) ->
     touch.sync file, mtime: past
 
 fixtures = (f) ->
-  futureTest ->
-    withTempFolder (folder) ->
-      makeFixtures(folder)
-      f(folder)
+  futureTest withTempFolder (folder) ->
+    makeFixtures(folder)
+    f(folder)
 
 # capture add/remove/change into an object for later inspection
 capture = (g) ->
@@ -52,18 +47,32 @@ capture = (g) ->
   summary
 
 describe "globwatch", ->
+  it "folderMatchesMinimatchPrefix", ->
+    set = new minimatch.Minimatch("/home/commie/**/*.js", nonegate: true).set[0]
+    globwatch.folderMatchesMinimatchPrefix([ "", "home" ], set).should.equal(true)
+    globwatch.folderMatchesMinimatchPrefix([ "", "home", "commie" ], set).should.equal(true)
+    globwatch.folderMatchesMinimatchPrefix([ "", "home", "robey" ], set).should.equal(false)
+    globwatch.folderMatchesMinimatchPrefix([ "", "home", "commie", "rus" ], set).should.equal(true)
+    set = new minimatch.Minimatch("/home/commie/x*/*.js", nonegate: true).set[0]
+    globwatch.folderMatchesMinimatchPrefix([ "", "home" ], set).should.equal(true)
+    globwatch.folderMatchesMinimatchPrefix([ "", "home", "commie" ], set).should.equal(true)
+    globwatch.folderMatchesMinimatchPrefix([ "", "home", "robey" ], set).should.equal(false)
+    globwatch.folderMatchesMinimatchPrefix([ "", "home", "commie", "rus" ], set).should.equal(false)
+    globwatch.folderMatchesMinimatchPrefix([ "", "home", "commie", "xyggurat" ], set).should.equal(true)
+    globwatch.folderMatchesMinimatchPrefix([ "", "home", "commie", "xyggurat", "toofar" ], set).should.equal(false)
+
   it "addWatch", futureTest ->
-    g = globwatch.globwatch("---")
+    g = globwatch.globwatch("/wut")
     g.ready.then ->
       for f in [
         "/absolute.txt"
         "/sub/absolute.txt"
         "/deeply/nested/file/why/nobody/knows.txt"
       ] then g.addWatch(f)
-      Object.keys(g.watchMap).sort().should.eql [ "/", "/deeply/nested/file/why/nobody/", "/sub/" ]
-      g.watchMap["/"].should.eql [ "/absolute.txt" ]
-      g.watchMap["/sub/"].should.eql [ "/sub/absolute.txt" ]
-      g.watchMap["/deeply/nested/file/why/nobody/"].should.eql [ "/deeply/nested/file/why/nobody/knows.txt" ]
+      g.watchMap.getFolders().sort().should.eql [ "/", "/deeply/nested/file/why/nobody/", "/sub/" ]
+      g.watchMap.getFilenames("/").should.eql [ "/absolute.txt" ]
+      g.watchMap.getFilenames("/sub/").should.eql [ "/sub/absolute.txt" ]
+      g.watchMap.getFilenames("/deeply/nested/file/why/nobody/").should.eql [ "/deeply/nested/file/why/nobody/knows.txt" ]
     .fin ->
       g.close()
 
@@ -72,10 +81,10 @@ describe "globwatch", ->
     g.patterns.should.eql [ "#{folder}/**/*.x" ]
     g.ready.then ->
       Object.keys(g.watchers).sort().should.eql [ "#{folder}/", "#{folder}/nested/", "#{folder}/sub/" ]
-      Object.keys(g.watchMap).sort().should.eql [ "#{folder}/", "#{folder}/nested/", "#{folder}/sub/" ]
-      g.watchMap["#{folder}/"].should.eql [ "#{folder}/one.x" ]
-      g.watchMap["#{folder}/nested/"].should.eql [ "#{folder}/nested/three.x" ]
-      g.watchMap["#{folder}/sub/"].should.eql [ "#{folder}/sub/one.x", "#{folder}/sub/two.x" ]
+      g.watchMap.getFolders().sort().should.eql [ "#{folder}/", "#{folder}/nested/", "#{folder}/sub/" ]
+      g.watchMap.getFilenames("#{folder}/").should.eql [ "#{folder}/one.x" ]
+      g.watchMap.getFilenames("#{folder}/nested/").should.eql [ "#{folder}/nested/three.x" ]
+      g.watchMap.getFilenames("#{folder}/sub/").should.eql [ "#{folder}/sub/one.x", "#{folder}/sub/two.x" ]
     .fin ->
       g.close()
 
@@ -84,8 +93,8 @@ describe "globwatch", ->
     g.patterns.should.eql [ "#{folder}/sub/**/*.x" ]
     g.ready.then ->
       Object.keys(g.watchers).sort().should.eql [ "#{folder}/sub/" ]
-      Object.keys(g.watchMap).sort().should.eql [ "#{folder}/sub/" ]
-      g.watchMap["#{folder}/sub/"].should.eql [ "#{folder}/sub/one.x", "#{folder}/sub/two.x" ]
+      g.watchMap.getFolders().sort().should.eql [ "#{folder}/sub/" ]
+      g.watchMap.getFilenames("#{folder}/sub/").should.eql [ "#{folder}/sub/one.x", "#{folder}/sub/two.x" ]
     .fin ->
       g.close()
 
@@ -94,8 +103,8 @@ describe "globwatch", ->
     g.patterns.should.eql [ "#{folder}/sub/**/*.x" ]
     g.ready.then ->
       Object.keys(g.watchers).sort().should.eql [ "#{folder}/sub/" ]
-      Object.keys(g.watchMap).sort().should.eql [ "#{folder}/sub/" ]
-      g.watchMap["#{folder}/sub/"].should.eql [ "#{folder}/sub/one.x", "#{folder}/sub/two.x" ]
+      g.watchMap.getFolders().sort().should.eql [ "#{folder}/sub/" ]
+      g.watchMap.getFilenames("#{folder}/sub/").should.eql [ "#{folder}/sub/one.x", "#{folder}/sub/two.x" ]
     .fin ->
       g.close()
 
@@ -257,5 +266,54 @@ describe "globwatch", ->
     g = globwatch.globwatch("#{folder}/not/there/*")
     g.ready.then ->
       3.should.equal(3)
+    .fin ->
+      g.close()
+
+  it "sees a new matching file even if the whole folder was missing when it started", futureTest withTempFolder (folder) ->
+    g = globwatch.globwatch("#{folder}/not/there/*")
+    summary = null
+    g.ready.then ->
+      summary = capture(g)
+      shell.mkdir "-p", "#{folder}/not/there"
+      fs.writeFileSync "#{folder}/not/there/ten.x", "wheeeeeee"
+      Q.delay(g.interval)
+    .then ->
+      summary.should.eql {
+        added: [ "#{folder}/not/there/ten.x" ]
+      }
+    .fin ->
+      g.close()
+
+  it "sees a new matching file even if nested folders were missing when it started", fixtures (folder) ->
+    g = globwatch.globwatch("#{folder}/sub/deeper/*.x")
+    summary = null
+    g.ready.then ->
+      summary = capture(g)
+      shell.mkdir "-p", "#{folder}/sub/deeper"
+      fs.writeFileSync "#{folder}/sub/deeper/ten.x", "wheeeeeee"
+      Q.delay(g.interval)
+    .then ->
+      summary.should.eql {
+        added: [ "#{folder}/sub/deeper/ten.x" ]
+      }
+    .fin ->
+      g.close()
+
+  it "sees a new matching file even if the entire tree was erased and re-created", fixtures (folder) ->
+    shell.mkdir "-p", "#{folder}/nested/deeper"
+    touch.sync "#{folder}/nested/deeper/four.x"
+    g = globwatch.globwatch("#{folder}/nested/deeper/*.x")
+    summary = null
+    g.ready.then ->
+      summary = capture(g)
+      shell.rm "-r", "#{folder}/nested"
+      shell.mkdir "-p", "#{folder}/nested/deeper"
+      fs.writeFileSync "#{folder}/nested/deeper/ten.x", "wheeeeeee"
+      Q.delay(g.interval)
+    .then ->
+      summary.should.eql {
+        deleted: [ "#{folder}/nested/deeper/four.x" ]
+        added: [ "#{folder}/nested/deeper/ten.x" ]
+      }
     .fin ->
       g.close()
