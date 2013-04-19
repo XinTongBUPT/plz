@@ -1,0 +1,50 @@
+#!/usr/bin/env coffee
+
+nopt = require 'nopt'
+path = require 'path'
+
+stake = require("../src/stake/stake")
+
+longOptions =
+  filename: [ path, null ]
+  version: Boolean
+  help: Boolean
+
+shortOptions =
+  f: [ "--filename" ]
+
+run = ->
+  options = nopt(longOptions, shortOptions)
+
+  if options.version
+    console.log "stake #{stake.VERSION}"
+    process.exit 0
+  if options.help
+    console.log(HELP)
+    process.exit 0
+  stake.run(options)
+
+HELP = """
+usage: stake [options] (task-name [task-options])*
+
+general options are listed below. task-options are all of the form
+"<name>=<value>".
+
+example:
+  stake -f Stakerules.coffee build debug=true run
+
+  loads rules from Stakerules.coffee, then runs two tasks:
+    - "build", with option "debug=true"
+    - "run", with no options
+
+options:
+  --filename FILENAME (-f)
+      use a specific rules file (default: #{stake.DEFAULT_FILENAME})
+  --help
+      this help
+  --version
+      show the version string and exit
+
+"""
+
+run()

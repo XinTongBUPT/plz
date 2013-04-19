@@ -20,14 +20,15 @@
     "test": "cake test"
   },
   "dependencies": {
+    "coffee-script": "*",
     "glob": "*",
     "minimatch": "*",
+    "nopt": "*",
     "q": "*",
     "shelljs": "*",
     "touch": "*"
   },
   "devDependencies": {
-    "coffee-script": "*",
     "mocha": "*",
     "should": "*"
   },
