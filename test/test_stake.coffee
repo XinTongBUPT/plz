@@ -17,7 +17,7 @@ dump = (x) -> util.inspect x, false, null, true
 
 
 describe "stake", ->
-  it "findRulesFile", withTempFolder (folder) ->
+  it "findRulesFile", futureTest withTempFolder (folder) ->
     process.chdir(folder)
     folder = process.cwd()
     fs.writeFileSync "#{folder}/rules.x", "hello."
@@ -43,3 +43,20 @@ describe "stake", ->
     .then (options) ->
       options.cwd.should.eql("#{folder}/nested")
       options.filename.should.eql("#{folder}/nested/#{stake.DEFAULT_FILENAME}")
+
+  describe "compileRulesFile", ->
+    it "compiles", futureTest withTempFolder (folder) ->
+      process.chdir(folder)
+      folder = process.cwd()
+      code = "task 'destroy', run: -> 3"
+      stake.compileRulesFile("test.coffee", code).then (tasks) ->
+        Object.keys(tasks).should.eql [ "destroy" ]
+
+    it "can call 'require'", futureTest withTempFolder (folder) ->
+      process.chdir(folder)
+      folder = process.cwd()
+      code = "name = require('./name').name; task name, run: -> 3"
+      fs.writeFileSync "#{folder}/name.coffee", "exports.name = 'daffy'\n"
+      stake.compileRulesFile("#{folder}/test.coffee", code).then (tasks) ->
+        Object.keys(tasks).should.eql [ "daffy" ]
+

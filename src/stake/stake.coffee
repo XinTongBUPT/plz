@@ -5,6 +5,8 @@ Q = require 'q'
 util = require 'util'
 vm = require 'vm'
 
+context = require("./context")
+
 VERSION = "0.1-20130418"
 DEFAULT_FILENAME = "Stakerules.coffee"
 
@@ -32,46 +34,38 @@ readRulesFile = (filename) ->
     data.toString()
 
 compileRulesFile = (filename, script) ->
+  tasks = {}
   try
-    script = coffee.compile(script)
-    vm.runInNewContext(script, makeContext(), filename)
-    Q(true)
+    sandbox = context.makeContext(filename, tasks)
+    coffee["eval"](script, sandbox: sandbox, filename: filename)
+    Q(tasks)
   catch error
     Q.reject(error)
 
-tasks = {}
-makeContext = ->
-  console: console
-  task: (name, options) -> tasks[name] = new Task(name, options)
 
 run = (options) ->
   findRulesFile(options)
   .fail (error) ->
-    console.log "ERROR: #{error.message}"
+    console.log "ERROR: #{error.stack}"
     process.exit 1
   .then (options) ->
     readRulesFile(options.filename)
   .fail (error) ->
-    console.log "ERROR: Unable to open #{options.filename}: #{error.message}"
+    console.log "ERROR: Unable to open #{options.filename}: #{error.stack}"
     process.exit 1
   .then (script) ->
     compileRulesFile(options.filename, script)
-  .fail (error)
-    console.log "ERROR: #{filename} failed to execute: #{error.message}"
+  .fail (error) ->
+    console.log "ERROR: #{options.filename} failed to execute: #{error.stack}"
     process.exit 1
   .then ->
-    console.log util.inspect(tasks)
+    console.log util.inspect(Object.keys(tasks).map((x) -> tasks[x].toString()))
     console.log "done."
-
-
-class Task
-  constructor: (@name, @options) ->
-    # FIXME: name must be [a-z]([-a-z0-9_])+
-
-  toString: -> "<Task #{@name}>"
 
 
 exports.VERSION = VERSION
 exports.DEFAULT_FILENAME = DEFAULT_FILENAME
 exports.run = run
 exports.findRulesFile = findRulesFile
+exports.compileRulesFile = compileRulesFile
+
