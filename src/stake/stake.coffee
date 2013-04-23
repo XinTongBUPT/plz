@@ -7,6 +7,7 @@ util = require 'util'
 vm = require 'vm'
 
 context = require("./context")
+logging = require("./logging")
 task = require("./task")
 
 VERSION = "0.1-20130418"
@@ -59,6 +60,7 @@ parseTaskList = (options) ->
         tasklist[index][1][m[1]] = m[2]
     else
       throw new Error("I don't know what to do with '#{word}'")
+  if tasklist.length == 0 then tasklist.push [ "all", {} ]
   options.tasklist = tasklist
   options.globals = globals
   Q(options)
@@ -73,25 +75,40 @@ displayHelp = (tasks) ->
   process.exit 0
 
 run = (options) ->
+  startTime = Date.now()
   findRulesFile(options)
   .fail (error) ->
-    console.log "ERROR: #{error.stack}"
+    logging.error "#{error.stack}"
     process.exit 1
   .then (options) ->
     readRulesFile(options.filename)
   .fail (error) ->
-    console.log "ERROR: Unable to open #{options.filename}: #{error.stack}"
+    logging.error "Unable to open #{options.filename}: #{error.stack}"
     process.exit 1
   .then (script) ->
     compileRulesFile(options.filename, script)
   .fail (error) ->
-    console.log "ERROR: #{options.filename} failed to execute: #{error.stack}"
+    logging.error "#{options.filename} failed to execute: #{error.stack}"
     process.exit 1
   .then (tasks) ->
     if options.help then displayHelp(tasks)
-    console.log util.inspect(options)
-    console.log util.inspect(Object.keys(tasks).map((x) -> tasks[x].toString()))
-    console.log "done."
+    options.tasks = tasks
+    parseTaskList(options)
+  .fail (error) ->
+    logging.error "#{error.stack}"
+    process.exit 1
+  .then (options) ->
+    Q.all(
+      for [ name, args ] in options.tasklist
+        if not options.tasks[name]
+          logging.error "No task named '#{name}'"
+          process.exit 1
+        rv = options.tasks[name].run(args)
+        Q(rv) # FIXME
+    )
+  .then ->
+    duration = Date.now() - startTime
+    logging.notice "Finished in #{duration} msec."
 
 
 exports.VERSION = VERSION

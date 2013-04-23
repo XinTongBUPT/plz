@@ -16,7 +16,7 @@ stake = require("../lib/stake/stake")
 dump = (x) -> util.inspect x, false, null, true
 
 
-describe.only "stake", ->
+describe "stake", ->
   it "findRulesFile", futureTest withTempFolder (folder) ->
     process.chdir(folder)
     folder = process.cwd()
@@ -87,4 +87,11 @@ describe.only "stake", ->
         [ "start", {} ]
       ]
       options.globals.should.eql(name: "ralph")
+    .then ->
+      parse([ ])
+    .then (options) ->
+      options.tasklist.should.eql [
+        [ "all", {} ]
+      ]
+      options.globals.should.eql({})
 

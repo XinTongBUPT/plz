@@ -12,7 +12,7 @@ task = require("../lib/stake/task")
 dump = (x) -> util.inspect x, false, null, true
 
 
-describe.only "Task", ->
+describe "Task", ->
   it "is restrictive about names", ->
     (new task.Task("a")).name.should.eql("a")
     (new task.Task("destroy")).name.should.eql("destroy")

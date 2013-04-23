@@ -3,19 +3,28 @@
 nopt = require 'nopt'
 path = require 'path'
 
+logging = require("../src/stake/logging")
 stake = require("../src/stake/stake")
 
 longOptions =
   filename: [ path, null ]
   version: Boolean
   help: Boolean
+  verbose: Boolean
+  debug: Boolean
 
 shortOptions =
   f: [ "--filename" ]
+  v: [ "--verbose" ]
+  D: [ "--debug" ]
 
 run = ->
   options = nopt(longOptions, shortOptions)
 
+  if options.verbose then logging.setVerbose(true)
+  if options.debug
+    logging.setVerbose(true)
+    logging.setDebug(true)
   if options.version
     console.log "stake #{stake.VERSION}"
     process.exit 0
@@ -43,6 +52,10 @@ options:
       this help
   --version
       show the version string and exit
+  --verbose (-v)
+      log more about what it's doing
+  --debug (-D)
+      log quite a lot more about what it's thinking
 
 """
 
