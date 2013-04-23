@@ -11,7 +11,7 @@ test_util = require("./test_util")
 futureTest = test_util.futureTest
 withTempFolder = test_util.withTempFolder
 
-stake = require("../lib/plz/plz")
+plz = require("../lib/plz/plz")
 
 dump = (x) -> util.inspect x, false, null, true
 

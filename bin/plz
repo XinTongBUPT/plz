@@ -3,8 +3,8 @@
 nopt = require 'nopt'
 path = require 'path'
 
-logging = require("../src/stake/logging")
-stake = require("../src/stake/stake")
+logging = require("../src/plz/logging")
+plz = require("../src/plz/plz")
 
 longOptions =
   filename: [ path, null ]
@@ -26,28 +26,28 @@ run = ->
     logging.setVerbose(true)
     logging.setDebug(true)
   if options.version
-    console.log "stake #{stake.VERSION}"
+    console.log "plz #{plz.VERSION}"
     process.exit 0
   if options.help
     console.log(HELP)
-  stake.run(options)
+  plz.run(options)
 
 HELP = """
-usage: stake [options] (task-name [task-options])*
+usage: plz [options] (task-name [task-options])*
 
 general options are listed below. task-options are all of the form
 "<name>=<value>".
 
 example:
-  stake -f Stakerules.coffee build debug=true run
+  plz -f #{plz.DEFAULT_FILENAME} build debug=true run
 
-  loads rules from Stakerules.coffee, then runs two tasks:
+  loads rules from #{plz.DEFAULT_FILENAME}, then runs two tasks:
     - "build", with option "debug=true"
     - "run", with no options
 
 options:
   --filename FILENAME (-f)
-      use a specific rules file (default: #{stake.DEFAULT_FILENAME})
+      use a specific rules file (default: #{plz.DEFAULT_FILENAME})
   --help
       this help
   --version
