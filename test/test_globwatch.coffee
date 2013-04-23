@@ -11,7 +11,7 @@ test_util = require("./test_util")
 futureTest = test_util.futureTest
 withTempFolder = test_util.withTempFolder
 
-globwatch = require("../lib/stake/globwatch")
+globwatch = require("../lib/plz/globwatch")
 
 dump = (x) -> util.inspect x, false, null, true
 

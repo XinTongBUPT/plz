@@ -1,13 +1,13 @@
 {
-  "name": "stake",
+  "name": "plz",
   "version": "1.0.0",
   "description": "?",
   "keywords": [ "?", "?" ],
   "author": "Robey Pointer <robeypointer@gmail.com>",
-  "homepage": "https://github.com/robey/stake",
+  "homepage": "https://github.com/robey/plz",
   "repository": {
     "type": "git",
-    "url": "git://github.com/robey/stake.git"
+    "url": "git://github.com/robey/plz.git"
   },
   "licenses": [
     {

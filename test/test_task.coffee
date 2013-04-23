@@ -7,7 +7,7 @@ should = require 'should'
 touch = require 'touch'
 util = require 'util'
 
-task = require("../lib/stake/task")
+task = require("../lib/plz/task")
 
 dump = (x) -> util.inspect x, false, null, true
 
