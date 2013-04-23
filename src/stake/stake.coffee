@@ -2,10 +2,12 @@ coffee = require 'coffee-script'
 fs = require 'fs'
 path = require 'path'
 Q = require 'q'
+sprintf = require 'sprintf'
 util = require 'util'
 vm = require 'vm'
 
 context = require("./context")
+task = require("./task")
 
 VERSION = "0.1-20130418"
 DEFAULT_FILENAME = "Stakerules.coffee"
@@ -42,6 +44,33 @@ compileRulesFile = (filename, script) ->
   catch error
     Q.reject(error)
 
+parseTaskList = (options) ->
+  tasklist = []
+  globals = {}
+  index = -1
+  for word in options.argv.remain
+    if word.match task.TASK_REGEX
+      index += 1
+      tasklist.push [ word, {} ]
+    else if (m = word.match /([-\w]+)=(.*)/)
+      if index < 0
+        globals[m[1]] = m[2]
+      else
+        tasklist[index][1][m[1]] = m[2]
+    else
+      throw new Error("I don't know what to do with '#{word}'")
+  options.tasklist = tasklist
+  options.globals = globals
+  Q(options)
+
+displayHelp = (tasks) ->
+  taskNames = Object.keys(tasks).sort()
+  width = taskNames.map((x) -> x.length).reduce((a, b) -> Math.max(a, b))
+  console.log "Known tasks:"
+  for t in taskNames
+    console.log sprintf.sprintf("  %#{width}s - %s", t, tasks[t].description)
+  console.log ""
+  process.exit 0
 
 run = (options) ->
   findRulesFile(options)
@@ -58,7 +87,9 @@ run = (options) ->
   .fail (error) ->
     console.log "ERROR: #{options.filename} failed to execute: #{error.stack}"
     process.exit 1
-  .then ->
+  .then (tasks) ->
+    if options.help then displayHelp(tasks)
+    console.log util.inspect(options)
     console.log util.inspect(Object.keys(tasks).map((x) -> tasks[x].toString()))
     console.log "done."
 
@@ -68,4 +99,5 @@ exports.DEFAULT_FILENAME = DEFAULT_FILENAME
 exports.run = run
 exports.findRulesFile = findRulesFile
 exports.compileRulesFile = compileRulesFile
+exports.parseTaskList = parseTaskList
 

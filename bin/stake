@@ -21,7 +21,6 @@ run = ->
     process.exit 0
   if options.help
     console.log(HELP)
-    process.exit 0
   stake.run(options)
 
 HELP = """

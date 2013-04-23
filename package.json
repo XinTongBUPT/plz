@@ -26,6 +26,7 @@
     "nopt": "*",
     "q": "*",
     "shelljs": "*",
+    "sprintf": "*",
     "touch": "*"
   },
   "devDependencies": {

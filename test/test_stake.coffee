@@ -16,7 +16,7 @@ stake = require("../lib/stake/stake")
 dump = (x) -> util.inspect x, false, null, true
 
 
-describe "stake", ->
+describe.only "stake", ->
   it "findRulesFile", futureTest withTempFolder (folder) ->
     process.chdir(folder)
     folder = process.cwd()
@@ -59,4 +59,32 @@ describe "stake", ->
       fs.writeFileSync "#{folder}/name.coffee", "exports.name = 'daffy'\n"
       stake.compileRulesFile("#{folder}/test.coffee", code).then (tasks) ->
         Object.keys(tasks).should.eql [ "daffy" ]
+
+  it "parseTaskList", futureTest ->
+    parse = (list) -> stake.parseTaskList(argv: { remain: list })
+    parse([ "clean", "build" ]).then (options) ->
+      options.tasklist.should.eql([ [ "clean", {} ], [ "build", {} ] ])
+      options.globals.should.eql({})
+    .then ->
+      parse([ "setup", "dbhost=db.example.com", "port=900" ])
+    .then (options) ->
+      options.tasklist.should.eql([ [ "setup", { dbhost: "db.example.com", port: "900" } ] ])
+      options.globals.should.eql({})
+    .then ->
+      parse([ "clean", "setup", "port=900", "erase", "x=several words", "install" ])
+    .then (options) ->
+      options.tasklist.should.eql [
+        [ "clean", {} ]
+        [ "setup", { port: "900" } ]
+        [ "erase", { x: "several words" } ]
+        [ "install", {} ]
+      ]
+      options.globals.should.eql({})
+    .then ->
+      parse([ "name=ralph", "start" ])
+    .then (options) ->
+      options.tasklist.should.eql [
+        [ "start", {} ]
+      ]
+      options.globals.should.eql(name: "ralph")
 
