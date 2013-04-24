@@ -79,15 +79,30 @@ describe "TaskTable", ->
         "b": new task.Task("b", after: "c")
         "c": new task.Task("c", after: "a")
       (-> table.validate()).should.throw(/a -> b -> c -> a/)
+      table.tasks =
+        "a": new task.Task("a", must: [ "b", "d" ])
+        "b": new task.Task("b", must: "c")
+        "c": new task.Task("c")
+        "d": new task.Task("d", must: "a")
+      (-> table.validate()).should.throw(/a -> d -> a/)
 
-    it "like a cross-reference", ->
+    it "but diamond dependencies are okay", ->
       table = new task.TaskTable()
       table.tasks =
         "a": new task.Task("a", must: [ "b", "c" ])
-        "b": new task.Task("b", after: "d")
-        "c": new task.Task("c", before: "d")
+        "b": new task.Task("b", must: "d")
+        "c": new task.Task("c", must: "d")
         "d": new task.Task("d")
-      (-> table.validate()).should.throw(/a -> b -> d and a -> c -> d/)
+      table.validate()
+
+  it "validates that tasks don't depend on decorators", ->
+    table = new task.TaskTable()
+    table.tasks =
+      "a": new task.Task("a", must: [ "b", "c" ])
+      "b": new task.Task("b", after: "d")
+      "c": new task.Task("c", before: "d")
+      "d": new task.Task("d")
+    (-> table.validate()).should.throw(/b is a decorator for d/)
 
   it "consolidates", futureTest ->
     table = new task.TaskTable()

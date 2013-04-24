@@ -67,7 +67,8 @@ class TaskTable
 
   validate: ->
     @validateReferences()
-    @validateConflicts()
+    @validateDependenciesExist()
+    @validateCycles()
 
   # make sure each dependency or before/after refers to a real task.
   validateReferences: ->
@@ -83,19 +84,30 @@ class TaskTable
       complaint = (for name, list of missing then "#{name} (referenced by #{list.sort().join(', ')})").sort().join(", ")
       throw new Error("Missing task(s): #{complaint}")
 
-  # look for conflicts and cycles.
-  validateConflicts: ->
+  # can't depend on a task that's before/after some other task (cuz it'll go away in consolidation).
+  validateDependenciesExist: ->
+    for name in @getNames()
+      task = @tasks[name]
+      for dep in (task.must or []).sort()
+        t = @tasks[dep]
+        if t.before? or t.after?
+          target = t.before or t.after
+          throw new Error("Task #{name} can't require #{dep} because #{dep} is a decorator for #{target}")
+
+  # look for cycles.
+  validateCycles: ->
+    copy = (x) ->
+      rv = {}
+      for k, v of x then rv[k] = v
+      rv
     walk = (name, seen={}, path) =>
       task = @tasks[name]
       if not path? then path = [ name ]
       seen[name] = path
       for t in (task.must or []).concat(task.before or [], task.after or []).sort()
         if seen[t]?
-          message = "Dependency conflict: "
-          if seen[t].length > 1 then message += "#{seen[t].join(' -> ')} and "
-          message += "#{path.concat(t).join(' -> ')}"
-          throw new Error(message)
-        walk(t, seen, path.concat(t))
+          throw new Error("Dependency loop: #{path.concat(t).join(' -> ')}")
+        walk(t, copy(seen), path.concat(t))
     for name in @getNames() then walk(name)
 
   # combine before/after tasks into the task they're amending.
