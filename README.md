@@ -63,6 +63,7 @@ have you -- since you were a kitten.
 - each task listed on the command line is run in order, sequentially, without
   overlap. the same applies to before/after execution, and dependencies.
 
-# to-do
+- before/after tasks are consolidated with their target so that they behave
+  as a single task.
 
-- rename to "plz" :)
+- dependent tasks are topo-sorted and executed in that order.

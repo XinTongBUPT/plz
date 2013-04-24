@@ -81,7 +81,7 @@ run = (options) ->
     if options.help
       console.log "(No #{DEFAULT_FILENAME} found.)"
       process.exit 0
-    logging.error "#{error.stack}"
+    logging.error "#{error.message}"
     process.exit 1
   .then (options) ->
     readRulesFile(options.filename)
@@ -94,8 +94,15 @@ run = (options) ->
     logging.error "#{options.filename} failed to execute: #{error.stack}"
     process.exit 1
   .then (table) ->
-    if options.help then displayHelp(table)
-    options.tasks = tasks
+    table.validate()
+    table.consolidate()
+    options.table = table
+    options
+  .fail (error) ->
+    logging.error "#{error.stack}"
+    process.exit 1
+  .then (options) ->
+    if options.help then displayHelp(options.table)
     parseTaskList(options)
   .fail (error) ->
     logging.error "#{error.stack}"
@@ -103,11 +110,11 @@ run = (options) ->
   .then (options) ->
     Q.all(
       for [ name, args ] in options.tasklist
-        if not options.tasks[name]
+        task = options.table.getTask(name)
+        if not task?
           logging.error "No task named '#{name}'"
           process.exit 1
-        rv = options.tasks[name].run(args)
-        Q(rv) # FIXME
+        task.run(args)
     )
   .then ->
     duration = Date.now() - startTime
