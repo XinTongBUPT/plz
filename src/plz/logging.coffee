@@ -25,7 +25,7 @@ inColor = (color, text) ->
   if usingColors
     "\u001b[#{colors[color]}m#{text}\u001b[0m"
   else
-    s
+    text
 
 error = (text) -> console.error inColor("red", "ERROR: " + text)
 warning = (text) -> console.log inColor("orange", "Warning: " + text)
