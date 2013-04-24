@@ -35,10 +35,8 @@ exec = (command, options={}) ->
   logging.debug "+ spawn #{p.pid}: #{util.inspect(command)}"
   p.on "exit", (code, signal) ->
     if signal?
-      logging.warning "Killed by signal: #{signal}"
       deferred.reject(new Error("Killed by signal: #{signal}"))
     else if code? and code != 0
-      logging.warning "Exit code: #{code}"
       deferred.reject(new Error("Exit code: #{code}"))
     else
       logging.debug "+ spawn #{p.pid} finished"

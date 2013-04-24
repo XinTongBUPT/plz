@@ -81,14 +81,18 @@ runTasks = (tasklist, table, executed={}) ->
     runTasks(tasklist, table, executed)
   else
     executed[name] = true
-    table.getTask(name).run(args).then ->
+    table.getTask(name).run(args)
+    .fail (error) ->
+      error.message = "Task '#{name}' failed: #{error.message}"
+      throw error
+    .then ->
       runTasks(tasklist, table, executed)
 
 run = (options) ->
   startTime = Date.now()
   findRulesFile(options)
   .fail (error) ->
-    if options.help
+    if options.help or options.tasks
       console.log "(No #{DEFAULT_FILENAME} found.)"
       process.exit 0
     logging.error "#{error.message}"
@@ -112,7 +116,7 @@ run = (options) ->
     logging.error "#{error.stack}"
     process.exit 1
   .then (options) ->
-    if options.help then displayHelp(options.table)
+    if options.help or options.tasks then displayHelp(options.table)
     parseTaskList(options)
   .fail (error) ->
     logging.error "#{error.stack}"
@@ -130,7 +134,16 @@ run = (options) ->
     runTasks(tasklist, table)
   .then ->
     duration = Date.now() - startTime
-    logging.notice "Finished in #{duration} msec."
+    if duration <= 2000
+      humanTime = "#{duration} milliseconds"
+    else if duration <= 120000
+      humanTime = sprintf.sprintf("%.1f seconds", duration / 1000.0)
+    else
+      humanTime = "#{Math.floor(duration / 60000.0)} minutes"
+    logging.notice "Finished in #{humanTime}."
+  .fail (error) ->
+    logging.error error.message
+    logging.info error.stack
 
 
 exports.VERSION = VERSION

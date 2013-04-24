@@ -10,8 +10,11 @@ longOptions =
   filename: [ path, null ]
   version: Boolean
   help: Boolean
+  tasks: Boolean
   verbose: Boolean
   debug: Boolean
+  "no-colors": Boolean
+  colors: Boolean
 
 shortOptions =
   f: [ "--filename" ]
@@ -21,6 +24,8 @@ shortOptions =
 run = ->
   options = nopt(longOptions, shortOptions)
 
+  if options.colors then logging.useColors(true)
+  if options["no-colors"] then logging.useColors(false)
   if options.verbose then logging.setVerbose(true)
   if options.debug
     logging.setVerbose(true)
@@ -50,12 +55,16 @@ options:
       use a specific rules file (default: #{plz.DEFAULT_FILENAME})
   --help
       this help
+  --tasks
+      show the list of tasks and their descriptions
   --version
       show the version string and exit
   --verbose (-v)
       log more about what it's doing
   --debug (-D)
       log quite a lot more about what it's thinking
+  --colors / --no-colors
+      override the color detection to turn on/off terminal colors
 
 """
 

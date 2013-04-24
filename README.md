@@ -21,12 +21,26 @@ have you -- since you were a kitten.
 
 # completed stories
 
-- a task list, with help (description) lines, shows up at "--help".
-
-
-# stories
+- a task list, with help (description) lines, shows up at "--help" and
+  "--tasks".
 
 - a default ("all") command runs when nothing else is specified.
+
+- can turn off colors with "--no-colors" or a dotfile.
+
+- a task can also say it should be run before or after any other task.
+
+- before/after tasks are consolidated with their target so that they behave
+  as a single task.
+
+- all basic shelljs commands are available in the global context, as well as
+  a version of "exec" that returns a promise (in case you want to do some
+  sequential "exec"s).
+
+- almost nothing is logged by default, but "--verbose" logs some basic info,
+  and "--debug" tells you what it's thinking as it works.
+
+# stories
 
 - instead of manual dependency lists, a task can auto-run when a file is
   changed (or created or deleted), based on a list of globs. for example,
@@ -34,12 +48,6 @@ have you -- since you were a kitten.
   files are recompiled when any "*.[ch]" file changes. touching a C file
   will cause a recompile, which touches the object files, which causes the
   ELF file to be rebuilt.
-
-- a task can also say it should be run before or after any other task.
-
-- all basic shelljs commands are available in the global context, as well as
-  a version of "exec" that returns a promise (in case you want to do some
-  sequential "exec"s).
 
 - the syntax is something like:
 
@@ -49,21 +57,14 @@ have you -- since you were a kitten.
       exec "gcc -O3 --stuff"
 ```
 
-- almost nothing is logged by default, but "--verbose" logs some basic info,
-  and "--debug" tells you what it's thinking as it works.
-
-- a task can handle its own command-line options. HOW?
+- a task can handle its own command-line options, using "key=value"
+  command-line arguments.
 
 - by default, the requested commands are executed, and the program exits.
   a command-line option makes it stay running, watching the requested files,
   and starting commands as they change.
 
-- can turn off colors with "--no-colors" or a dotfile.
-
 - each task listed on the command line is run in order, sequentially, without
   overlap. the same applies to before/after execution, and dependencies.
-
-- before/after tasks are consolidated with their target so that they behave
-  as a single task.
 
 - dependent tasks are topo-sorted and executed in that order.
