@@ -18,8 +18,6 @@ dump = (x) -> util.inspect x, false, null, true
 
 describe "plz", ->
   it "findRulesFile", futureTest withTempFolder (folder) ->
-    process.chdir(folder)
-    folder = process.cwd()
     fs.writeFileSync "#{folder}/rules.x", "hello."
     options = { filename: "rules.x" }
     # find with explicit filename.
@@ -46,19 +44,15 @@ describe "plz", ->
 
   describe "compileRulesFile", ->
     it "compiles", futureTest withTempFolder (folder) ->
-      process.chdir(folder)
-      folder = process.cwd()
       code = "task 'destroy', run: -> 3"
-      plz.compileRulesFile("test.coffee", code).then (tasks) ->
-        Object.keys(tasks).should.eql [ "destroy" ]
+      plz.compileRulesFile("test.coffee", code).then (table) ->
+        table.getNames().should.eql [ "destroy" ]
 
     it "can call 'require'", futureTest withTempFolder (folder) ->
-      process.chdir(folder)
-      folder = process.cwd()
       code = "name = require('./name').name; task name, run: -> 3"
       fs.writeFileSync "#{folder}/name.coffee", "exports.name = 'daffy'\n"
-      plz.compileRulesFile("#{folder}/test.coffee", code).then (tasks) ->
-        Object.keys(tasks).should.eql [ "daffy" ]
+      plz.compileRulesFile("#{folder}/test.coffee", code).then (table) ->
+        table.getNames().should.eql [ "daffy" ]
 
   it "parseTaskList", futureTest ->
     parse = (list) -> plz.parseTaskList(argv: { remain: list })

@@ -68,7 +68,7 @@ magick = (filename, context) ->
 
 trace = (args) -> args.map((x) -> util.inspect(x)).join(' ')
 
-makeContext = (filename, tasks) ->
+makeContext = (filename, table) ->
   globals =
     # copy from node
     console: console
@@ -83,7 +83,7 @@ makeContext = (filename, tasks) ->
 
     task: (name, options) ->
       logging.debug "Defining task: #{name}"
-      tasks[name] = new task.Task(name, options)
+      table.addTask(new task.Task(name, options))
 
   for command in ShellCommands then do (command) ->
     globals[command] = (args...) ->

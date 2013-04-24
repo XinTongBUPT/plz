@@ -11,7 +11,7 @@ logging = require("./logging")
 task = require("./task")
 
 VERSION = "0.1-20130418"
-DEFAULT_FILENAME = "Stakerules.coffee"
+DEFAULT_FILENAME = "plz-rules.coffee"
 
 findRulesFile = (options) ->
   if not options.cwd? then options.cwd = process.cwd()
@@ -37,11 +37,11 @@ readRulesFile = (filename) ->
     data.toString()
 
 compileRulesFile = (filename, script) ->
-  tasks = {}
+  table = new task.TaskTable()
   try
-    sandbox = context.makeContext(filename, tasks)
+    sandbox = context.makeContext(filename, table)
     coffee["eval"](script, sandbox: sandbox, filename: filename)
-    Q(tasks)
+    Q(table)
   catch error
     Q.reject(error)
 
@@ -65,12 +65,12 @@ parseTaskList = (options) ->
   options.globals = globals
   Q(options)
 
-displayHelp = (tasks) ->
-  taskNames = Object.keys(tasks).sort()
+displayHelp = (table) ->
+  taskNames = table.getNames()
   width = taskNames.map((x) -> x.length).reduce((a, b) -> Math.max(a, b))
   console.log "Known tasks:"
   for t in taskNames
-    console.log sprintf.sprintf("  %#{width}s - %s", t, tasks[t].description)
+    console.log sprintf.sprintf("  %#{width}s - %s", t, table.getTask(t).description)
   console.log ""
   process.exit 0
 
@@ -78,6 +78,9 @@ run = (options) ->
   startTime = Date.now()
   findRulesFile(options)
   .fail (error) ->
+    if options.help
+      console.log "(No #{DEFAULT_FILENAME} found.)"
+      process.exit 0
     logging.error "#{error.stack}"
     process.exit 1
   .then (options) ->
@@ -90,8 +93,8 @@ run = (options) ->
   .fail (error) ->
     logging.error "#{options.filename} failed to execute: #{error.stack}"
     process.exit 1
-  .then (tasks) ->
-    if options.help then displayHelp(tasks)
+  .then (table) ->
+    if options.help then displayHelp(table)
     options.tasks = tasks
     parseTaskList(options)
   .fail (error) ->

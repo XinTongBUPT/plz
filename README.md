@@ -1,5 +1,4 @@
 
-
 # why does this exist?
 
 "make" is 1000 years old, and somehow still the gold standard of build
@@ -20,11 +19,14 @@ bogged down in "frameworks" or trying to figure out how to read an environment
 variable or copy a file. shell commands have been able to do this -- and so
 have you -- since you were a kitten.
 
+# completed stories
+
+- a task list, with help (description) lines, shows up at "--help".
+
+
 # stories
 
 - a default ("all") command runs when nothing else is specified.
-
-- a task list, with help (description) lines, shows up at "--help".
 
 - instead of manual dependency lists, a task can auto-run when a file is
   changed (or created or deleted), based on a list of globs. for example,
@@ -55,3 +57,12 @@ have you -- since you were a kitten.
 - by default, the requested commands are executed, and the program exits.
   a command-line option makes it stay running, watching the requested files,
   and starting commands as they change.
+
+- can turn off colors with "--no-colors" or a dotfile.
+
+- each task listed on the command line is run in order, sequentially, without
+  overlap. the same applies to before/after execution, and dependencies.
+
+# to-do
+
+- rename to "plz" :)

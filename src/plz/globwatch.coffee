@@ -72,7 +72,7 @@ exports.globwatch = (pattern, options) ->
   g = new GlobWatch(pattern, options)
 
 class GlobWatch extends events.EventEmitter
-  constructor: (pattern, options={}) ->
+  constructor: (patterns, options={}) ->
     @closed = false
     @cwd = options.cwd or process.cwd()
     @debounceInterval = options.debounceInterval or 100
@@ -85,7 +85,8 @@ class GlobWatch extends events.EventEmitter
     @patterns = []
     # minimatch sets for our patterns
     @minimatchSets = []
-    @add(pattern)
+    if typeof patterns == "string" then patterns = [ patterns ]
+    @add(patterns...)
 
   add: (patterns...) ->
     @debug "add: #{util.inspect(patterns)}"
