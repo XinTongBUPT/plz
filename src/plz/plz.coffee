@@ -74,6 +74,16 @@ displayHelp = (table) ->
   console.log ""
   process.exit 0
 
+runTasks = (tasklist, table, executed={}) ->
+  if tasklist.length == 0 then return Q(true)
+  [ name, args ] = tasklist.shift()
+  if executed[name]?
+    runTasks(tasklist, table, executed)
+  else
+    executed[name] = true
+    table.getTask(name).run(args).then ->
+      runTasks(tasklist, table, executed)
+
 run = (options) ->
   startTime = Date.now()
   findRulesFile(options)
@@ -108,14 +118,16 @@ run = (options) ->
     logging.error "#{error.stack}"
     process.exit 1
   .then (options) ->
-    Q.all(
-      for [ name, args ] in options.tasklist
-        task = options.table.getTask(name)
-        if not task?
-          logging.error "No task named '#{name}'"
-          process.exit 1
-        task.run(args)
-    )
+    tasklist = []
+    table = options.table
+    for [ name, args ] in options.tasklist
+      if not table.getTask(name)?
+        logging.error "No task named '#{name}'"
+        process.exit 1
+      for t in table.topoSort(name)
+        tasklist.push(if t == name then [ name, args ] else [ t, {} ])
+    logging.debug "Run tasks: #{tasklist.map((x) -> x[0]).join(' ')}"
+    runTasks(tasklist, table)
   .then ->
     duration = Date.now() - startTime
     logging.notice "Finished in #{duration} msec."

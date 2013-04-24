@@ -128,6 +128,19 @@ class TaskTable
     for name in @getNames() then process(@tasks[name], "before")
     for name in @getNames() then process(@tasks[name], "after")
 
+  # return a list of task names, sorted by dependency order, needed for this task.
+  topoSort: (name) ->
+    rv = []
+    # make a copy of 'graph' so we don't destroy it. it's mutable in JS.
+    tasks = {}
+    for k, v of @tasks then tasks[k] = v
+    visit = (name) ->
+      for t in (tasks[name]?.must or []) then visit(t)
+      delete tasks[name]
+      rv.push name
+    visit(name)
+    rv
+
 
 exports.TASK_REGEX = TASK_REGEX
 exports.Task = Task
