@@ -25,9 +25,9 @@ run = (command) ->
 
 task "test", "run unit tests", ->
   invoke("build").then ->
-    # some tests are slow: --timeout 5000
+    # some tests are slow: --timeout 5000 --slow 3000
     # would be nice to optionally grep: --grep xxx
-    run("./node_modules/mocha/bin/mocha --timeout 5000 -R spec --compilers coffee:coffee-script --colors")
+    run("./node_modules/mocha/bin/mocha --timeout 5000 --slow 3000 -R spec --compilers coffee:coffee-script --colors")
 
 task "build", "build javascript", ->
   run("mkdir -p lib").then ->
