@@ -9,8 +9,8 @@ util = require 'util'
 
 task = require("../lib/plz/task")
 
-dump = (x) -> util.inspect x, false, null, true
-
+test_util = require("./test_util")
+futureTest = test_util.futureTest
 
 describe "Task", ->
   it "is restrictive about names", ->
@@ -25,7 +25,7 @@ describe "Task", ->
   it "won't let you have a before and after", ->
     (-> new task.Task("name", before: "x", after: "y")).should.throw(/not both/)
 
-  it "combines two tasks", ->
+  it "combines two tasks", futureTest ->
     t1 = new task.Task "first",
       description: "i'm first"
       before: "b1"
@@ -44,8 +44,8 @@ describe "Task", ->
     t3.watch.should.eql [ "*.js" ]
     t3.before.should.eql("b1")
     options = { x: 9 }
-    t3.run(options)
-    options.should.eql(x: 10, z: 10)
+    t3.run(options).then ->
+      options.should.eql(x: 10, z: 10)
 
 describe "TaskTable", ->
   describe "validates that all referenced tasks exist", ->
@@ -89,7 +89,7 @@ describe "TaskTable", ->
         "d": new task.Task("d")
       (-> table.validate()).should.throw(/a -> b -> d and a -> c -> d/)
 
-  it "consolidates", ->
+  it "consolidates", futureTest ->
     table = new task.TaskTable()
     table.tasks =
       "a": new task.Task("a", after: "b", watch: "a.js", run: (options) -> options.x *= 3)
@@ -102,5 +102,5 @@ describe "TaskTable", ->
     c.watch.should.eql [ "c.js", "b.js", "a.js" ]
     c.covered.sort().should.eql [ "a", "b", "c" ]
     options = { x: 100 }
-    c.run(options)
-    options.should.eql(x: 630)
+    c.run(options).then ->
+      options.should.eql(x: 630)

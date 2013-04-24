@@ -18,7 +18,13 @@ class Task
     if not @name.match TASK_REGEX
       throw new Error("Task name must be letters, digits, - or _")
     @description = options.description or options.desc or "(unknown)"
-    @block = options.run
+    run = options.run or (->)
+    name = @name
+    @run = (options) ->
+      logging.info ">>> #{name}"
+      logging.debug ">>> #{name}: #{util.inspect(options)}"
+      # coerce return value into a promise if it isn't one already.
+      Q(run(options))
     @must = options.must
     if typeof @must == "string" then @must = [ @must ]
     @before = options.before?.toString()
@@ -33,11 +39,6 @@ class Task
 
   toString: -> "<Task #{@name}>"
 
-  run: (options) ->
-    logging.info ">>> #{@name}"
-    # coerce return value into a promise if it isn't one already.
-    Q(if @block then @block(options) else null)
-
   # combine this task with another, to create a new combined task.
   # the tasks are combined left-to-right, but properties that can't be
   # meaningfully merged are pulled from 'primaryTask'.
@@ -48,12 +49,7 @@ class Task
     if @must? or task.must?
       t.must = (@must or [])
       for m in task.must then if t.must.indexOf(m) < 0 then t.must.push(m)
-    if @block? or task.block?
-      b1 = @block or (->)
-      b2 = task.block or (->)
-      t.block = (options) ->
-        b1(options)
-        b2(options)
+    t.run = (options) => @run(options).then -> task.run(options)
     if primaryTask.before? then t.before = primaryTask.before
     if primaryTask.after? then t.after = primaryTask.after
     for c in @covered.concat(task.covered)
