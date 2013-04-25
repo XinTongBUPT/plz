@@ -40,14 +40,7 @@ have you -- since you were a kitten.
 - almost nothing is logged by default, but "--verbose" logs some basic info,
   and "--debug" tells you what it's thinking as it works.
 
-# stories
-
-- instead of manual dependency lists, a task can auto-run when a file is
-  changed (or created or deleted), based on a list of globs. for example,
-  the executable ELF file is created when any "*.o" file changes. the C
-  files are recompiled when any "*.[ch]" file changes. touching a C file
-  will cause a recompile, which touches the object files, which causes the
-  ELF file to be rebuilt.
+- dependent tasks are topo-sorted and executed in that order.
 
 - the syntax is something like:
 
@@ -60,11 +53,20 @@ have you -- since you were a kitten.
 - a task can handle its own command-line options, using "key=value"
   command-line arguments.
 
+- each task listed on the command line is run in order, sequentially, without
+  overlap. the same applies to before/after execution, and dependencies.
+
+
+# stories
+
+- instead of manual dependency lists, a task can auto-run when a file is
+  changed (or created or deleted), based on a list of globs. for example,
+  the executable ELF file is created when any "*.o" file changes. the C
+  files are recompiled when any "*.[ch]" file changes. touching a C file
+  will cause a recompile, which touches the object files, which causes the
+  ELF file to be rebuilt.
+
 - by default, the requested commands are executed, and the program exits.
   a command-line option makes it stay running, watching the requested files,
   and starting commands as they change.
 
-- each task listed on the command line is run in order, sequentially, without
-  overlap. the same applies to before/after execution, and dependencies.
-
-- dependent tasks are topo-sorted and executed in that order.

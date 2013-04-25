@@ -20,7 +20,7 @@ binplz = "#{process.cwd()}/bin/plz"
 # effectively integration tests.
 # verify the behavior of 'bin/plz'.
 #
-describe.only "bin/plz", ->
+describe "bin/plz", ->
   it "responds to --help", futureTest ->
     execFuture("#{binplz} --help").then (p) ->
       p.stderr.toString().should.eql("")
@@ -80,6 +80,15 @@ describe.only "bin/plz", ->
     .then (p) ->
       p.stdout.should.match(/hello\ngoodbye\n/)
 
+  it "topo-sorts dependent tasks and runs each only once", futureTest withTempFolder (folder) ->
+    fs.writeFileSync "#{folder}/rules", TOPO_TEST
+    execFuture("#{binplz} -f rules pets")
+    .then (p) ->
+      p.stdout.should.match(/bee\ncat\ndog\npets!\nFinished/)
+      execFuture("#{binplz} -f rules pets cat")
+    .then (p) ->
+      p.stdout.should.match(/bee\ncat\ndog\npets!\nFinished/)
+
 
 SHELL_TEST = """
 task "wiggle", run: ->
@@ -111,4 +120,18 @@ EXEC_TEST = """
 task "sleeper", run: ->
   exec("sleep 1 && echo hello").then ->
     exec("echo goodbye")
+"""
+
+TOPO_TEST = """
+task "bee", run: ->
+  echo "bee"
+
+task "cat", must: "bee", run: ->
+  echo "cat"
+
+task "dog", must: "bee", run: ->
+  echo "dog"
+
+task "pets", must: [ "cat", "dog" ], run: ->
+  echo "pets!"
 """
