@@ -115,7 +115,7 @@ describe "globwatch", ->
       summary = capture(g)
       touch.sync "#{folder}/nested/four.x"
       touch.sync "#{folder}/sub/not-me.txt"
-      Q.delay(g.debounceInterval * 2)
+      Q.delay(g.debounceInterval * 4)
     .then ->
       g.close()
       summary.should.eql {
@@ -130,7 +130,7 @@ describe "globwatch", ->
       touch.sync "#{folder}/nested/four.x"
       touch.sync "#{folder}/sub/not-me.txt"
       touch.sync "#{folder}/sub/four.x"
-      Q.delay(g.debounceInterval * 2)
+      Q.delay(g.debounceInterval * 4)
     .then ->
       g.close()
       summary.should.eql {
@@ -144,7 +144,7 @@ describe "globwatch", ->
       summary = capture(g)
       shell.mkdir "-p", "#{folder}/nested/more/deeply"
       touch.sync "#{folder}/nested/more/deeply/nine.x"
-      Q.delay(g.debounceInterval * 2)
+      Q.delay(g.debounceInterval * 4)
     .then ->
       g.close()
       summary.should.eql {
@@ -186,7 +186,8 @@ describe "globwatch", ->
     g.ready.then ->
       summary = capture(g)
       shell.rm "-r", "#{folder}/nested"
-      Q.delay(g.debounceInterval * 2)
+      # this seems to be due to a bug in node/uv where watch events may be delayed by up to 250ms?
+      Q.delay(g.debounceInterval * 4)
     .then ->
       g.close()
       summary.should.eql {

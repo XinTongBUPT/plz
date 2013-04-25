@@ -61,11 +61,26 @@ class WatchMap
 
   getFilenames: (folderName) -> Object.keys(@map[folderName] or {})
 
+  getAllFilenames: (folderName) ->
+    @getFilenames(folderName).concat(
+      f for f in @getFolders() when path.dirname(f) + "/" == folderName
+    )
+
+  getNestedFolders: (folderName) ->
+    f for f in @getFolders() when f[...(folderName.length)] == folderName
+
   watchingFolder: (folderName) -> @map[folderName]?
 
   watchingFile: (filename, parent) ->
     if not parent? then parent = path.dirname(filename)
     @map[parent]?[filename]?
+
+  toDebug: ->
+    out = []
+    for folder in Object.keys(@map).sort()
+      out.push folder
+      for filename in Object.keys(@map[folder]).sort() then out.push "  `- #{filename}"
+    out.join("\n") + "\n"
 
 
 exports.globwatch = (pattern, options) ->
@@ -178,24 +193,8 @@ class GlobWatch extends events.EventEmitter
     @debug "watchFile: #{filename}"
     fs.watchFile filename, { persistent: false, interval: @interval }, (curr, prev) =>
       @debug "watchFile event: #{filename} #{prev.mtime.getTime()} -> #{curr.mtime.getTime()}"
-      if curr.mtime.getTime() != prev.mtime.getTime() and fs.existsSync(filename) then @emit 'changed', filename
-
-  unwatch: (filename) ->
-    @debug "unwatch: #{filename}"
-    if @watchMap.watchingFolder(filename)
-      # folder!
-      fs.unwatchFile(filename)
-      for f in @watchMap.getFilenames(filename) then fs.unwatchFile(f)
-      @watchMap.unwatchFolder(filename)
-    else
-      parent = path.dirname(filename)
-      if parent != "/" then parent += "/"
-      if @watchMap.watchingFile(filename, parent)
-        fs.unwatchFile(filename)
-        @watchMap.unwatchFile(filename, parent)
-    if @watchers[filename]
-      @watchers[filename].close()
-      delete @watchers[filename]
+      if (curr.mtime.getTime() != prev.mtime.getTime() or curr.size != prev.size) and fs.existsSync(filename)
+        @emit 'changed', filename
 
   folderChanged: (folderName) ->
     return if @closed
@@ -212,29 +211,52 @@ class GlobWatch extends events.EventEmitter
         catch e
           # file vanished before we could stat it!
         filename
-      previous = @watchMap.getFilenames(folderName)
+      previous = @watchMap.getAllFilenames(folderName)
 
       # deleted files/folders
       for f in previous.filter((x) -> current.indexOf(x) < 0)
-        @debug "file deleted: #{f}"
-        @unwatch f
-        if f[f.length - 1] != '/' then @emit 'deleted', f
+        if f[f.length - 1] == '/' then @folderDeleted(f) else @fileDeleted(f)
 
       # new files/folders
       for f in current.filter((x) -> previous.indexOf(x) < 0)
-        if f[f.length - 1] != '/'
-          if @isMatch(f)
-            @debug "file added: #{f}"
-            @watchMap.watchFile(f, folderName)
-            @watchFile f
-            @emit 'added', f
-        else
-          # new folder! if it potentially matches the prefix of a glob we're
-          # watching, start watching it, and recursively check for new files.
-          if @folderIsInteresting(f)
-            @watchMap.watchFolder(f)
-            @watchFolder f
-            @folderChanged(f)
+        if f[f.length - 1] == '/' then @folderAdded(f) else @fileAdded(f, folderName)
+
+  fileDeleted: (filename) ->
+    @debug "file deleted: #{filename}"
+    parent = path.dirname(filename)
+    if parent != "/" then parent += "/"
+    if @watchMap.watchingFile(filename, parent)
+      fs.unwatchFile(filename)
+      @watchMap.unwatchFile(filename, parent)
+    @emit 'deleted', filename
+
+  folderDeleted: (folderName) ->
+    # this is trouble, bartman-style, because it may be the only indication
+    # we get that an entire subtree is gone. recurse through them, marking
+    # everything as dead.
+    @debug "folder deleted: #{folderName}"
+    # getNestedFolders() also includes this folder (folderName).
+    for folder in @watchMap.getNestedFolders(folderName)
+      for filename in @watchMap.getFilenames(folder) then @fileDeleted(filename)
+      if @watchers[folder]
+        @watchers[folder].close()
+        delete @watchers[folder]
+      @watchMap.unwatchFolder(folder)
+
+  fileAdded: (filename, folderName) ->
+    return unless @isMatch(filename)
+    @debug "file added: #{filename}"
+    @watchMap.watchFile(filename, folderName)
+    @watchFile filename
+    @emit 'added', filename
+
+  folderAdded: (folderName) ->
+    # if it potentially matches the prefix of a glob we're watching, start
+    # watching it, and recursively check for new files.
+    return unless @folderIsInteresting(folderName)
+    @watchMap.watchFolder(folderName)
+    @watchFolder folderName
+    @folderChanged(folderName)
 
   # does this folder match the prefix for an existing watch-pattern?
   folderIsInteresting: (folderName) ->
