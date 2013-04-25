@@ -157,7 +157,7 @@ describe "globwatch", ->
     g.ready.then ->
       summary = capture(g)
       fs.unlinkSync("#{folder}/sub/one.x")
-      Q.delay(g.debounceInterval * 2)
+      Q.delay(g.debounceInterval * 4)
     .then ->
       g.close()
       summary.should.eql {
@@ -170,7 +170,7 @@ describe "globwatch", ->
     g.ready.then ->
       summary = capture(g)
       fs.renameSync "#{folder}/sub/two.x", "#{folder}/sub/twelve.x"
-      Q.delay(g.debounceInterval * 2)
+      Q.delay(g.debounceInterval * 4)
     .then ->
       g.close()
       summary.should.eql {
