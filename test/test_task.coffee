@@ -119,3 +119,47 @@ describe "TaskTable", ->
     options = { x: 100 }
     c.run(options).then ->
       options.should.eql(x: 630)
+
+  it "enqueues", ->
+    table = new task.TaskTable()
+    (table.timer?).should.eql(false)
+    table.enqueue "start", {}
+    (table.timer?).should.eql(true)
+    clearTimeout(table.timer)
+    table.timer = "WAT"
+    table.enqueue "start", {}
+    (table.timer?).should.eql(true)
+    table.timer.should.eql("WAT")
+
+  it "delays a bit before running enqueued tasks", futureTest ->
+    completed = []
+    table = new task.TaskTable()
+    table.tasks =
+      "first": new task.Task "first", run: -> completed.push "first"
+      "second": new task.Task "second", run: -> completed.push "second"
+    table.enqueue "first"
+    table.enqueue "second"
+    completed.should.eql []
+    Q.delay(task.QUEUE_DELAY + 50).then ->
+      completed.should.eql [ "first", "second" ]
+
+  it "waits for the run queue to finish before running again", futureTest ->
+    completed = []
+    table = new task.TaskTable()
+    table.tasks =
+      "first": new task.Task "first", run: ->
+        completed.push "first1"
+        # try to force "last" to run now!
+        table.enqueue "last"
+        table.runQueue()
+        completed.push "first2"
+      "second": new task.Task "second", run: -> completed.push "second"
+      "last": new task.Task "last", run: -> completed.push "last"
+    table.enqueue "first"
+    table.enqueue "second"
+    completed.should.eql []
+    table.runQueue().then ->
+      completed.should.eql [ "first1", "first2", "second", "last" ]
+
+
+

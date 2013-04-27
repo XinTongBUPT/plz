@@ -70,3 +70,11 @@ have you -- since you were a kitten.
   a command-line option makes it stay running, watching the requested files,
   and starting commands as they change.
 
+- plugins can be loaded in some straightforward way from the local
+  environment, and add features to the global context (like 'mocha' or
+  'coffee').
+
+
+
+
+

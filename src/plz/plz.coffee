@@ -13,6 +13,27 @@ task = require("./task")
 VERSION = "0.1-20130418"
 DEFAULT_FILENAME = "plz-rules.coffee"
 
+# ----- load rules
+
+loadRules = (options) ->
+  findRulesFile(options)
+  .fail (error) ->
+    if options.help or options.tasks
+      console.log "(No #{DEFAULT_FILENAME} found.)"
+      process.exit 0
+    logging.error "#{error.message}"
+    process.exit 1
+  .then (options) ->
+    readRulesFile(options.filename)
+  .fail (error) ->
+    logging.error "Unable to open #{options.filename}: #{error.stack}"
+    process.exit 1
+  .then (script) ->
+    compileRulesFile(options.filename, script)
+  .fail (error) ->
+    logging.error "#{options.filename} failed to execute: #{error.stack}"
+    process.exit 1
+
 findRulesFile = (options) ->
   if not options.cwd? then options.cwd = process.cwd()
   if options.filename?
@@ -74,64 +95,25 @@ displayHelp = (table) ->
   console.log ""
   process.exit 0
 
-runTasks = (tasklist, table, executed={}) ->
-  if tasklist.length == 0 then return Q(true)
-  [ name, args ] = tasklist.shift()
-  if executed[name]?
-    runTasks(tasklist, table, executed)
-  else
-    executed[name] = true
-    table.getTask(name).run(args)
-    .fail (error) ->
-      error.message = "Task '#{name}' failed: #{error.message}"
-      throw error
-    .then ->
-      runTasks(tasklist, table, executed)
-
 run = (options) ->
   startTime = Date.now()
-  findRulesFile(options)
-  .fail (error) ->
-    if options.help or options.tasks
-      console.log "(No #{DEFAULT_FILENAME} found.)"
-      process.exit 0
-    logging.error "#{error.message}"
-    process.exit 1
-  .then (options) ->
-    readRulesFile(options.filename)
-  .fail (error) ->
-    logging.error "Unable to open #{options.filename}: #{error.stack}"
-    process.exit 1
-  .then (script) ->
-    compileRulesFile(options.filename, script)
-  .fail (error) ->
-    logging.error "#{options.filename} failed to execute: #{error.stack}"
-    process.exit 1
+  loadRules(options)
   .then (table) ->
     table.validate()
     table.consolidate()
+    if options.help or options.tasks then displayHelp(table)
+    parseTaskList(options)
+    for [ name, args ] in options.tasklist
+      if not table.getTask(name)? then throw new Error("No task named '#{name}'")
     options.table = table
     options
   .fail (error) ->
     logging.error "#{error.stack}"
     process.exit 1
   .then (options) ->
-    if options.help or options.tasks then displayHelp(options.table)
-    parseTaskList(options)
-  .fail (error) ->
-    logging.error "#{error.stack}"
-    process.exit 1
-  .then (options) ->
-    tasklist = []
     table = options.table
-    for [ name, args ] in options.tasklist
-      if not table.getTask(name)?
-        logging.error "No task named '#{name}'"
-        process.exit 1
-      for t in table.topoSort(name)
-        tasklist.push(if t == name then [ name, args ] else [ t, {} ])
-    logging.debug "Run tasks: #{tasklist.map((x) -> x[0]).join(' ')}"
-    runTasks(tasklist, table)
+    for [ name, args ] in options.tasklist then table.enqueue(name, args)
+    table.runQueue()
   .then ->
     duration = Date.now() - startTime
     if duration <= 2000

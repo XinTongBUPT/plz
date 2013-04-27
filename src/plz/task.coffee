@@ -5,6 +5,9 @@ logging = require "./logging"
 
 TASK_REGEX = /^[a-z][-a-z0-9_]*$/
 
+# how long to wait to run a job after it is triggered (msec)
+QUEUE_DELAY = 100
+
 # task "name",
 #   description: "displayed in help"
 #   before: "task"  # run immediately before another task, when that task is run
@@ -60,6 +63,9 @@ class Task
 class TaskTable
   constructor: ->
     @tasks = {}
+    @timer = null
+    @queue = []
+    @state = "waiting"
 
   getNames: -> Object.keys(@tasks).sort()
   getTask: (name) -> @tasks[name]
@@ -128,6 +134,49 @@ class TaskTable
     for name in @getNames() then process(@tasks[name], "before")
     for name in @getNames() then process(@tasks[name], "after")
 
+  # queue a task (by name), and start a timer to actually run it.
+  enqueue: (name, args={}) ->
+    for [ n, a ] in @queue then if n == name then return
+    @queue.push [ name, args ]
+    if not @timer? then @timer = setTimeout((=> @runQueue()), QUEUE_DELAY)
+
+  # run all queued tasks, and their depedencies. 
+  # returns a promise that will resolve when all the tasks have run.
+  runQueue: ->
+    # if we're in the middle of running the queue already, chillax.
+    if @state in [ "running", "run-again" ]
+      @state = "run-again"
+      return
+    if @timer? then clearTimeout(@timer)
+    @timer = null
+    # fill in all the dependencies
+    tasklist = []
+    for [ name, args ] in @queue
+      for t in @topoSort(name)
+        tasklist.push(if t == name then [ name, args ] else [ t, {} ])
+    @queue = []
+    logging.debug "Run tasks: #{tasklist.map((x) -> x[0]).join(' ')}"
+    @state = "running"
+    @runTasks(tasklist).then =>
+      again = @state == "run-again"
+      @state = "waiting"
+      if again then @runQueue()
+
+  # loop through a tasklist, running one at a time, skipping dupes.
+  runTasks: (tasklist, executed={}) ->
+    if tasklist.length == 0 then return Q(true)
+    [ name, args ] = tasklist.shift()
+    if executed[name]?
+      @runTasks(tasklist, executed)
+    else
+      executed[name] = true
+      @getTask(name).run(args)
+      .fail (error) ->
+        error.message = "Task '#{name}' failed: #{error.message}"
+        throw error
+      .then =>
+        @runTasks(tasklist, executed)
+
   # return a list of task names, sorted by dependency order, needed for this task.
   topoSort: (name) ->
     rv = []
@@ -143,5 +192,6 @@ class TaskTable
 
 
 exports.TASK_REGEX = TASK_REGEX
+exports.QUEUE_DELAY = QUEUE_DELAY
 exports.Task = Task
 exports.TaskTable = TaskTable
