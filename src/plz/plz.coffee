@@ -106,14 +106,18 @@ run = (options) ->
     for [ name, args ] in options.tasklist
       if not table.getTask(name)? then throw new Error("No task named '#{name}'")
     options.table = table
-    options
   .fail (error) ->
     logging.error "#{error.stack}"
     process.exit 1
-  .then (options) ->
+  .then ->
+    table = options.table
+    table.activate(persistent: true, interval: 250)
+  .then ->
     table = options.table
     for [ name, args ] in options.tasklist then table.enqueue(name, args)
     table.runQueue()
+  # .then ->
+  #   Q.delay(5000)
   .then ->
     duration = Date.now() - startTime
     if duration <= 2000

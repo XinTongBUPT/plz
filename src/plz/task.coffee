@@ -1,6 +1,7 @@
 Q = require 'q'
 util = require 'util'
 
+globwatch = require "./globwatch"
 logging = require "./logging"
 
 TASK_REGEX = /^[a-z][-a-z0-9_]*$/
@@ -84,7 +85,7 @@ class TaskTable
         (missing[task.before] or= []).push name
       if task.after? and (not @tasks[task.after]?)
         (missing[task.after] or= []).push name
-      if task.watch? then for t in task.watch then if not @tasks[t]?
+      if task.must? then for t in task.must then if not @tasks[t]?
         (missing[t] or= []).push name
     if Object.keys(missing).length > 0
       complaint = (for name, list of missing then "#{name} (referenced by #{list.sort().join(', ')})").sort().join(", ")
@@ -134,11 +135,29 @@ class TaskTable
     for name in @getNames() then process(@tasks[name], "before")
     for name in @getNames() then process(@tasks[name], "after")
 
+  # turn on all the watches.
+  # options: { persistent, debounceInterval, interval }
+  activate: (options) ->
+    options.debug = logging.debug
+    promises = []
+    for name in @getNames()
+      task = @getTask(name)
+      if task.watch?
+        watcher = globwatch.globwatch(task.watch, options)
+        handler = =>
+          if @enqueue(name) then logging.info "* File change triggered: #{name}"
+        watcher.on "added", handler
+        watcher.on "deleted", handler
+        watcher.on "changed", handler
+        promises.push watcher.ready
+    Q.all(promises)
+
   # queue a task (by name), and start a timer to actually run it.
   enqueue: (name, args={}) ->
-    for [ n, a ] in @queue then if n == name then return
+    for [ n, a ] in @queue then if n == name then return false
     @queue.push [ name, args ]
     if not @timer? then @timer = setTimeout((=> @runQueue()), QUEUE_DELAY)
+    true
 
   # run all queued tasks, and their depedencies. 
   # returns a promise that will resolve when all the tasks have run.

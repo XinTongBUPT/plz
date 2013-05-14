@@ -1,3 +1,4 @@
+sprintf = require 'sprintf'
 
 usingColors = process.stdout.isTTY
 useColors = (bool) -> usingColors = bool
@@ -27,11 +28,16 @@ inColor = (color, text) ->
   else
     text
 
+appStartTime = Date.now()
+
 error = (text) -> console.error inColor("red", "ERROR: " + text)
 warning = (text) -> console.log inColor("orange", "Warning: " + text)
 notice = (text) -> console.log text
 info = (text) -> if isVerbose then console.log inColor("cyan", text)
-debug = (text) -> if isDebug then console.log inColor("green", text)
+debug = (text) ->
+  if not isDebug then return
+  now = (Date.now() - appStartTime) / 1000.0
+  console.log inColor("green", sprintf.sprintf "[%06.3f] %s", now, text)
 
 exports.useColors = useColors
 exports.setVerbose = setVerbose

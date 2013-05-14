@@ -93,6 +93,7 @@ class GlobWatch extends events.EventEmitter
     @debounceInterval = options.debounceInterval or 100
     @interval = options.interval or 1000
     @debug = options.debug or (->)
+    @persistent = options.persistent or false
     @watchMap = new WatchMap
     # map of (absolute) folderName -> FSWatcher
     @watchers = {}
@@ -191,7 +192,7 @@ class GlobWatch extends events.EventEmitter
   # FIXME may throw an exception
   watchFile: (filename) ->
     @debug "watchFile: #{filename}"
-    fs.watchFile filename, { persistent: false, interval: @interval }, (curr, prev) =>
+    fs.watchFile filename, { persistent: @persistent, interval: @interval }, (curr, prev) =>
       @debug "watchFile event: #{filename} #{prev.mtime.getTime()} -> #{curr.mtime.getTime()}"
       if (curr.mtime.getTime() != prev.mtime.getTime() or curr.size != prev.size) and fs.existsSync(filename)
         @emit 'changed', filename
