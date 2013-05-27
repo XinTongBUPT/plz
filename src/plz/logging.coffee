@@ -33,7 +33,7 @@ appStartTime = Date.now()
 error = (text) -> console.error inColor("red", "ERROR: " + text)
 warning = (text) -> console.log inColor("orange", "Warning: " + text)
 notice = (text) -> console.log text
-info = (text) -> if isVerbose then console.log inColor("cyan", text)
+info = (text) -> if isVerbose or isDebug then console.log inColor("cyan", text)
 debug = (text) ->
   if not isDebug then return
   now = (Date.now() - appStartTime) / 1000.0
