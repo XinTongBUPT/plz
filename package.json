@@ -17,12 +17,11 @@
   ],
 
   "scripts": {
-    "test": "cake test"
+    "test": "plz test"
   },
   "dependencies": {
     "coffee-script": "*",
-    "glob": "*",
-    "minimatch": "*",
+    "globwatcher": "*",
     "nopt": "*",
     "q": "*",
     "shelljs": "*",

@@ -10,8 +10,8 @@ context = require("./context")
 logging = require("./logging")
 task = require("./task")
 
-VERSION = "0.1-20130418"
-DEFAULT_FILENAME = "plz-rules.coffee"
+VERSION = "0.3-20130511"
+DEFAULT_FILENAME = "build.plz"
 
 # ----- load rules
 
@@ -111,7 +111,7 @@ run = (options) ->
     process.exit 1
   .then ->
     table = options.table
-    table.activate(persistent: true, interval: 250)
+    table.activate(persistent: false, interval: 250)
   .then ->
     table = options.table
     for [ name, args ] in options.tasklist then table.enqueue(name, args)
