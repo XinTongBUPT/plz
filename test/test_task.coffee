@@ -53,7 +53,7 @@ describe "Task", ->
 describe "TaskTable", ->
   describe "validates that all referenced tasks exist", ->
     it "when they do", ->
-      table = new task.TaskTable()
+      table = new task_table.TaskTable()
       table.tasks =
         "a": new task.Task("a", after: "b")
         "b": new task.Task("b", before: "c")
@@ -61,13 +61,13 @@ describe "TaskTable", ->
       table.validate()
 
     it "when they don't", ->
-      table = new task.TaskTable()
+      table = new task_table.TaskTable()
       table.tasks =
         "a": new task.Task("a", after: "b")
         "b": new task.Task("b", before: "c")
         "c": new task.Task("c", after: "d")
       (-> table.validate()).should.throw(/d \(referenced by c\)/)
-      table = new task.TaskTable()
+      table = new task_table.TaskTable()
       table.tasks =
         "mercury": new task.Task("mercury", after: "mars")
         "venus": new task.Task("venus", before: "mars")
@@ -76,7 +76,7 @@ describe "TaskTable", ->
 
   describe "validates that tasks don't have conflicting dependencies", ->
     it "like a cycle", ->
-      table = new task.TaskTable()
+      table = new task_table.TaskTable()
       table.tasks =
         "a": new task.Task("a", after: "b")
         "b": new task.Task("b", after: "c")
@@ -90,7 +90,7 @@ describe "TaskTable", ->
       (-> table.validate()).should.throw(/a -> d -> a/)
 
     it "but diamond dependencies are okay", ->
-      table = new task.TaskTable()
+      table = new task_table.TaskTable()
       table.tasks =
         "a": new task.Task("a", must: [ "b", "c" ])
         "b": new task.Task("b", must: "d")
@@ -99,7 +99,7 @@ describe "TaskTable", ->
       table.validate()
 
   it "validates that tasks don't depend on decorators", ->
-    table = new task.TaskTable()
+    table = new task_table.TaskTable()
     table.tasks =
       "a": new task.Task("a", must: [ "b", "c" ])
       "b": new task.Task("b", after: "d")
@@ -108,7 +108,7 @@ describe "TaskTable", ->
     (-> table.validate()).should.throw(/b is a decorator for d/)
 
   it "consolidates", futureTest ->
-    table = new task.TaskTable()
+    table = new task_table.TaskTable()
     table.tasks =
       "a": new task.Task("a", after: "b", watch: "a.js", run: (options) -> options.x *= 3)
       "b": new task.Task("b", after: "c", watch: "b.js", run: (options) -> options.x += 10)
@@ -124,7 +124,7 @@ describe "TaskTable", ->
       options.should.eql(x: 630)
 
   it "enqueues", ->
-    table = new task.TaskTable()
+    table = new task_table.TaskTable()
     (table.timer?).should.eql(false)
     table.enqueue "start", {}
     (table.timer?).should.eql(true)
@@ -136,7 +136,7 @@ describe "TaskTable", ->
 
   it "delays a bit before running enqueued tasks", futureTest ->
     completed = []
-    table = new task.TaskTable()
+    table = new task_table.TaskTable()
     table.tasks =
       "first": new task.Task "first", run: -> completed.push "first"
       "second": new task.Task "second", run: -> completed.push "second"
@@ -148,7 +148,7 @@ describe "TaskTable", ->
 
   it "waits for the run queue to finish before running again", futureTest ->
     completed = []
-    table = new task.TaskTable()
+    table = new task_table.TaskTable()
     table.tasks =
       "first": new task.Task "first", run: ->
         completed.push "first1"
@@ -165,7 +165,6 @@ describe "TaskTable", ->
       completed.should.eql [ "first1", "first2", "second", "last" ]
 
   it "notices file-based dependencies immediately", futureTest withTempFolder (folder) ->
-    logging.setDebug true
     completed = []
     table = new task_table.TaskTable()
     table.tasks =
