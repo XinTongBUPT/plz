@@ -7,10 +7,13 @@ should = require 'should'
 touch = require 'touch'
 util = require 'util'
 
+logging = require("../lib/plz/logging")
 task = require("../lib/plz/task")
+task_table = require("../lib/plz/task_table")
 
 test_util = require("./test_util")
 futureTest = test_util.futureTest
+withTempFolder = test_util.withTempFolder
 
 describe "Task", ->
   it "is restrictive about names", ->
@@ -160,6 +163,26 @@ describe "TaskTable", ->
     completed.should.eql []
     table.runQueue().then ->
       completed.should.eql [ "first1", "first2", "second", "last" ]
+
+  it "notices file-based dependencies immediately", futureTest withTempFolder (folder) ->
+    logging.setDebug true
+    completed = []
+    table = new task_table.TaskTable()
+    table.tasks =
+      "first": new task.Task "first", run: ->
+        completed.push "first"
+        fs.writeFileSync "#{folder}/out.x", "hello!"
+      "second": new task.Task "second", watch: "#{folder}/out.x", run: ->
+        completed.push "second"
+    table.activate(persistent: false, interval: 250)
+    .then ->
+      table.enqueue "first"
+      completed.should.eql []
+      table.runQueueWithWatches()
+    .then ->
+      completed.should.eql [ "first", "second" ]
+      table.queue.length.should.eql(0)
+      table.close()
 
 
 

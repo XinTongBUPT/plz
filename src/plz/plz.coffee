@@ -9,6 +9,7 @@ vm = require 'vm'
 context = require("./context")
 logging = require("./logging")
 task = require("./task")
+task_table = require("./task_table")
 
 VERSION = "0.3-20130511"
 DEFAULT_FILENAME = "build.plz"
@@ -58,7 +59,7 @@ readRulesFile = (filename) ->
     data.toString()
 
 compileRulesFile = (filename, script) ->
-  table = new task.TaskTable()
+  table = new task_table.TaskTable()
   try
     sandbox = context.makeContext(filename, table)
     coffee["eval"](script, sandbox: sandbox, filename: filename)
@@ -116,8 +117,6 @@ run = (options) ->
     table = options.table
     for [ name, args ] in options.tasklist then table.enqueue(name, args)
     table.runQueue()
-  # .then ->
-  #   Q.delay(5000)
   .then ->
     duration = Date.now() - startTime
     if duration <= 2000
