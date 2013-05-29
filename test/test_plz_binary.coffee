@@ -42,10 +42,10 @@ describe "bin/plz", ->
     fs.writeFileSync "#{folder}/rules", "task 'xyzzy', desc: 'plover', run: ->\n"
     execFuture("#{binplz} -D -f rules --color --help")
     .then (p) ->
-      p.stdout.should.match(/\n\u001b\[32mDefining task: xyzzy/)
+      p.stdout.should.match(/\n\u001b\[32m\[\d\d\.\d\d\d] Defining task: xyzzy/)
       execFuture("#{binplz} -D -f rules --no-color --help")
     .then (p) ->
-      p.stdout.should.match(/\nDefining task: xyzzy/)
+      p.stdout.should.match(/\n\[\d\d\.\d\d\d\] Defining task: xyzzy/)
 
   it "can do basic shell commands", futureTest withTempFolder (folder) ->
     fs.writeFileSync "#{folder}/rules", SHELL_TEST

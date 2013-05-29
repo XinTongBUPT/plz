@@ -9,9 +9,10 @@ vm = require 'vm'
 context = require("./context")
 logging = require("./logging")
 task = require("./task")
+task_table = require("./task_table")
 
-VERSION = "0.1-20130418"
-DEFAULT_FILENAME = "plz-rules.coffee"
+VERSION = "0.3-20130511"
+DEFAULT_FILENAME = "build.plz"
 
 # ----- load rules
 
@@ -58,7 +59,7 @@ readRulesFile = (filename) ->
     data.toString()
 
 compileRulesFile = (filename, script) ->
-  table = new task.TaskTable()
+  table = new task_table.TaskTable()
   try
     sandbox = context.makeContext(filename, table)
     coffee["eval"](script, sandbox: sandbox, filename: filename)
@@ -106,11 +107,13 @@ run = (options) ->
     for [ name, args ] in options.tasklist
       if not table.getTask(name)? then throw new Error("No task named '#{name}'")
     options.table = table
-    options
   .fail (error) ->
     logging.error "#{error.stack}"
     process.exit 1
-  .then (options) ->
+  .then ->
+    table = options.table
+    table.activate(persistent: false, interval: 250)
+  .then ->
     table = options.table
     for [ name, args ] in options.tasklist then table.enqueue(name, args)
     table.runQueue()
