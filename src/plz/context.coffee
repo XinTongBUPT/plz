@@ -32,14 +32,14 @@ exec = (command, options={}) ->
 
   deferred = Q.defer()
   p = child_process.spawn command[0], command[1...], options
-  logging.debug "+ spawn #{p.pid}: #{util.inspect(command)}"
+  logging.debug "spawn #{p.pid}: #{util.inspect(command)}"
   p.on "exit", (code, signal) ->
     if signal?
       deferred.reject(new Error("Killed by signal: #{signal}"))
     else if code? and code != 0
       deferred.reject(new Error("Exit code: #{code}"))
     else
-      logging.debug "+ spawn #{p.pid} finished"
+      logging.debug "spawn #{p.pid} finished"
       deferred.resolve(p)
   p.on "error", (error) ->
     logging.error error.message
@@ -54,7 +54,7 @@ magick = (filename, context) ->
   Module = require('module')
 
   # this feels wrong, like we're missing some "normal" way to initialize a new node module.
-  m = new Module("Stakerules")
+  m = new Module("build.plz")
   m.filename = filename
   r = (path) -> Module._load(path, m, true)
   for key, value of require then if key != "paths" then r[key] = require[key]
@@ -85,11 +85,11 @@ makeContext = (filename, table) ->
 
   for command in ShellCommands then do (command) ->
     globals[command] = (args...) ->
-      logging.info "- #{command} #{trace(args)}"
+      logging.info "+ #{command} #{trace(args)}"
       shell[command](args...)
 
   globals.touch = (args...) ->
-    logging.info "- touch #{trace(args)}"
+    logging.info "+ touch #{trace(args)}"
     touch.sync(args...)
 
   globals.exec = exec

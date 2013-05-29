@@ -21,7 +21,7 @@ class Task
     run = options.run or (->)
     name = @name
     @run = (options) ->
-      logging.info ">>> #{name}"
+      logging.taskinfo ">>> #{name}"
       logging.debug ">>> #{name}: #{util.inspect(options)}"
       # coerce return value into a promise if it isn't one already.
       Q(run(options))

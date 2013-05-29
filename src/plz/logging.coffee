@@ -15,6 +15,7 @@ colors =
   red: "31"
   purple: "35"
   blue: "34;1"
+  brightCyan: "36;1"
   cyan: "36"
   green: "32"
   black: "30"
@@ -33,7 +34,8 @@ appStartTime = Date.now()
 error = (text) -> console.error inColor("red", "ERROR: " + text)
 warning = (text) -> console.log inColor("orange", "Warning: " + text)
 notice = (text) -> console.log text
-info = (text) -> if isVerbose or isDebug then console.log inColor("cyan", text)
+taskinfo = (text) -> if isVerbose or isDebug then console.log inColor("cyan", text)
+info = (text) -> if isVerbose or isDebug then console.log inColor("blue", text)
 debug = (text) ->
   if not isDebug then return
   now = (Date.now() - appStartTime) / 1000.0
@@ -46,5 +48,6 @@ exports.inColor = inColor
 exports.error = error
 exports.warning = warning
 exports.notice = notice
+exports.taskinfo = taskinfo
 exports.info = info
 exports.debug = debug

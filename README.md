@@ -45,9 +45,9 @@ have you -- since you were a kitten.
 - the syntax is something like:
 
 ```coffeescript
-    task 'name', description: "do something", run: ->
-      mkdir "-p", "whatever"
-      exec "gcc -O3 --stuff"
+task 'name', description: "do something", run: ->
+  mkdir "-p", "whatever"
+  exec "gcc -O3 --stuff"
 ```
 
 - a task can handle its own command-line options, using "key=value"
@@ -56,15 +56,14 @@ have you -- since you were a kitten.
 - each task listed on the command line is run in order, sequentially, without
   overlap. the same applies to before/after execution, and dependencies.
 
-
-# stories
-
 - instead of manual dependency lists, a task can auto-run when a file is
   changed (or created or deleted), based on a list of globs. for example,
   the executable ELF file is created when any "*.o" file changes. the C
   files are recompiled when any "*.[ch]" file changes. touching a C file
   will cause a recompile, which touches the object files, which causes the
   ELF file to be rebuilt.
+
+# stories
 
 - by default, the requested commands are executed, and the program exits.
   a command-line option makes it stay running, watching the requested files,
@@ -74,7 +73,16 @@ have you -- since you were a kitten.
   environment, and add features to the global context (like 'mocha' or
   'coffee').
 
+- globals accessible in the task files include "config" for read-only access
+  to command-line config parameters like "--no-color" and "queueTask" to
+  queue up a new task to run.
 
+- a global "project" object can be used to determine at minimum the "type"
+  (folder layout, like "node") and "name" (name of the folder), for use by
+  plugins.
 
+- any command-line options can be passed in a .plzrc also.
+
+- a "base rules" file can be loaded by naming it in an env var ("PLZRULES"?).
 
 
