@@ -125,16 +125,13 @@ describe "TaskTable", ->
 
   it "enqueues", ->
     table = new task_table.TaskTable()
-    (table.timer?).should.eql(false)
+    table.queue.length.should.eql(0)
     table.enqueue "start", {}
-    (table.timer?).should.eql(true)
-    clearTimeout(table.timer)
-    table.timer = "WAT"
+    table.queue.length.should.eql(1)
     table.enqueue "start", {}
-    (table.timer?).should.eql(true)
-    table.timer.should.eql("WAT")
+    table.queue.length.should.eql(1)
 
-  it "delays a bit before running enqueued tasks", futureTest ->
+  it "runs enqueued tasks", futureTest ->
     completed = []
     table = new task_table.TaskTable()
     table.tasks =
@@ -143,7 +140,7 @@ describe "TaskTable", ->
     table.enqueue "first"
     table.enqueue "second"
     completed.should.eql []
-    Q.delay(task.QUEUE_DELAY + 50).then ->
+    table.runQueue().then ->
       completed.should.eql [ "first", "second" ]
 
   it "waits for the run queue to finish before running again", futureTest ->
@@ -177,11 +174,8 @@ describe "TaskTable", ->
     .then ->
       table.enqueue "first"
       completed.should.eql []
-      table.runQueueWithWatches()
+      table.runQueue()
     .then ->
       completed.should.eql [ "first", "second" ]
       table.queue.length.should.eql(0)
       table.close()
-
-
-

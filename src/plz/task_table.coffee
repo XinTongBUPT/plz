@@ -1,6 +1,7 @@
 globwatcher = require 'globwatcher'
 logging = require "./logging"
 Q = require 'q'
+util = require 'util'
 
 # how long to wait to run a job after it is triggered (msec)
 QUEUE_DELAY = 100
@@ -8,7 +9,6 @@ QUEUE_DELAY = 100
 class TaskTable
   constructor: ->
     @tasks = {}
-    @timer = null
     @queue = []
     @state = "waiting"
 
@@ -89,7 +89,9 @@ class TaskTable
       if task.watch?
         watcher = globwatcher.globwatcher(task.watch, persistent: false)
         handler = =>
-          if @enqueue(name) then logging.info "* File change triggered: #{name}"
+          if @enqueue(name)
+            logging.info "* File change triggered: #{name}"
+            @runQueue()
         watcher.on "added", handler
         watcher.on "deleted", handler
         watcher.on "changed", handler
@@ -103,27 +105,9 @@ class TaskTable
       task = @getTask(name)
       if task.watcher? then task.watcher.close()
 
-  # queue a task (by name), and start a timer to actually run it.
+  # queue a task (by name). doesn't actually run the queue.
   enqueue: (name, args={}) ->
-    for [ n, a ] in @queue then if n == name then return false
-    @queue.push [ name, args ]
-    if not @timer? then @timer = setTimeout((=> @runQueue()), QUEUE_DELAY)
-    true
-
-  # run all queued tasks, and their dependencies, using runQueue.
-  # then scan for updated files, and if any new tasks are enqueued by the
-  # watches, run them. loop until no more tasks are queued.
-  runQueueWithWatches: ->
-    @runQueue().then =>
-      Q.all(
-        for name in @getNames()
-          task = @getTask(name)
-          if task.watcher? then task.watcher.check() else Q(null)
-      )
-    .then =>
-      if @queue.length > 0
-        logging.debug "Watched files triggered #{@queue.length} new tasks; running them."
-        @runQueueWithWatches()
+    @pushUnique @queue, name, args
 
   # run all queued tasks, and their depedencies. 
   # returns a promise that will resolve when all the tasks have run.
@@ -132,18 +116,12 @@ class TaskTable
     if @state in [ "running", "run-again" ]
       @state = "run-again"
       return
-    if @timer? then clearTimeout(@timer)
-    @timer = null
     # fill in all the dependencies
-    tasklist = []
-    for [ name, args ] in @queue
-      for t in @topoSort(name)
-        tasklist.push(if t == name then [ name, args ] else [ t, {} ])
-    @queue = []
+    tasklist = @flushQueue([])
     logging.debug "Run tasks: #{tasklist.map((x) -> x[0]).join(' ')}"
     @state = "running"
     @runTasks(tasklist).then =>
-      again = @state == "run-again"
+      again = (@state == "run-again") or (@queue.size > 0)
       @state = "waiting"
       if again then @runQueue()
 
@@ -151,16 +129,42 @@ class TaskTable
   runTasks: (tasklist, executed={}) ->
     if tasklist.length == 0 then return Q(true)
     [ name, args ] = tasklist.shift()
-    if executed[name]?
+    (if executed[name]? Q(null) else @runTask(name, args, executed)).then =>
+      # remove anything from the queue that's already in the current tasklist.
+      @queue = @queue.filter ([ name, args ]) ->
+        for [ n, a ] in tasklist then if name == n then return false
+        true
       @runTasks(tasklist, executed)
-    else
-      executed[name] = true
-      @getTask(name).run(args)
-      .fail (error) ->
-        error.message = "Task '#{name}' failed: #{error.message}"
-        throw error
-      .then =>
-        @runTasks(tasklist, executed)
+
+  # run one task, then check for watch triggers
+  runTask: (name, args, executed={}) ->
+    executed[name] = true
+    @getTask(name).run(args)
+    .fail (error) ->
+      error.message = "Task '#{name}' failed: #{error.message}"
+      throw error
+    .then =>
+      @checkWatches()
+
+  # check any watched files, proactively.
+  # returns a promise that will be fulfilled when the checks are done.
+  checkWatches: ->
+    Q.all(
+      for name in @getNames()
+        task = @getTask(name)
+        if task.watcher? then task.watcher.check() else Q(null)
+    )
+
+  # flush the queued tasks (and their dependencies) into a given task list.
+  flushQueue: (tasklist = [], executed = {}) ->
+    for [ name, args ] in @queue
+      for t in @topoSort(name)
+        if t == name
+          @pushUnique tasklist, name, args
+        else
+          @pushUnique tasklist, t
+    @queue = []
+    tasklist
 
   # return a list of task names, sorted by dependency order, needed for this task.
   topoSort: (name) ->
@@ -174,6 +178,12 @@ class TaskTable
       rv.push name
     visit(name)
     rv
+
+  # add a [ name, args ] to a list, but only if the named task isn't already in the list.
+  pushUnique: (list, name, args={}) ->
+    for [ n, a ] in list then if n == name then return false
+    list.push [ name, args ]
+    true
 
 
 exports.QUEUE_DELAY = QUEUE_DELAY
