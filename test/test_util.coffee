@@ -1,6 +1,7 @@
 child_process = require 'child_process'
 Q = require 'q'
 shell = require 'shelljs'
+util = require 'util'
 
 # run a test as a future, and call mocha's 'done' method at the end of the chain.
 exports.futureTest = (f) ->

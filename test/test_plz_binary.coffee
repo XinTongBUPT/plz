@@ -89,6 +89,14 @@ describe "bin/plz", ->
     .then (p) ->
       p.stdout.should.match(/bee\ncat\ndog\npets!\nFinished/)
 
+  it "runs without exiting, waiting for file changes", futureTest withTempFolder (folder) ->
+    fs.writeFileSync "#{folder}/rules", RUN_TEST.replace("%FOLDER%", folder)
+    f1 = execFuture("#{binplz} -r -f rules main").then (p) ->
+      p.stdout.should.match(/hello\ngoodbye\n/)
+    f2 = Q.delay(500).then ->
+      fs.writeFileSync "#{folder}/die.x", "die!"
+    Q.all([ f1, f2 ])
+
 
 SHELL_TEST = """
 task "wiggle", run: ->
@@ -134,4 +142,14 @@ task "dog", must: "bee", run: ->
 
 task "pets", must: [ "cat", "dog" ], run: ->
   echo "pets!"
+"""
+
+RUN_TEST = """
+task "main", run: ->
+  echo "hello"
+
+task "end", watch: "%FOLDER%/die.x", run: ->
+  echo "goodbye"
+  process.exit 0
+
 """

@@ -63,11 +63,11 @@ task 'name', description: "do something", run: ->
   will cause a recompile, which touches the object files, which causes the
   ELF file to be rebuilt.
 
-# stories
-
 - by default, the requested commands are executed, and the program exits.
   a command-line option makes it stay running, watching the requested files,
   and starting commands as they change.
+
+# stories
 
 - plugins can be loaded in some straightforward way from the local
   environment, and add features to the global context (like 'mocha' or

@@ -8,6 +8,7 @@ plz = require("../src/plz/plz")
 
 longOptions =
   filename: [ path, null ]
+  run: Boolean
   version: Boolean
   help: Boolean
   tasks: Boolean
@@ -18,6 +19,7 @@ longOptions =
 
 shortOptions =
   f: [ "--filename" ]
+  r: [ "--run" ]
   v: [ "--verbose" ]
   D: [ "--debug" ]
 
@@ -53,10 +55,12 @@ example:
 options:
   --filename FILENAME (-f)
       use a specific rules file (default: #{plz.DEFAULT_FILENAME})
-  --help
-      this help
   --tasks
       show the list of tasks and their descriptions
+  --run (-r)
+      stay running, monitoring files for changes
+  --help
+      this help
   --version
       show the version string and exit
   --verbose (-v)

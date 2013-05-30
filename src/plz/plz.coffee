@@ -112,20 +112,23 @@ run = (options) ->
     process.exit 1
   .then ->
     table = options.table
-    table.activate(persistent: false, interval: 250)
+    table.activate(persistent: options.run, interval: 250)
   .then ->
     table = options.table
     for [ name, args ] in options.tasklist then table.enqueue(name, args)
     table.runQueue()
   .then ->
-    duration = Date.now() - startTime
-    if duration <= 2000
-      humanTime = "#{duration} milliseconds"
-    else if duration <= 120000
-      humanTime = sprintf.sprintf("%.1f seconds", duration / 1000.0)
+    if options.run
+      logging.taskinfo "Watching for changes..."
     else
-      humanTime = "#{Math.floor(duration / 60000.0)} minutes"
-    logging.notice "Finished in #{humanTime}."
+      duration = Date.now() - startTime
+      if duration <= 2000
+        humanTime = "#{duration} milliseconds"
+      else if duration <= 120000
+        humanTime = sprintf.sprintf("%.1f seconds", duration / 1000.0)
+      else
+        humanTime = "#{Math.floor(duration / 60000.0)} minutes"
+      logging.notice "Finished in #{humanTime}."
   .fail (error) ->
     logging.error error.message
     logging.info error.stack

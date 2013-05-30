@@ -82,12 +82,12 @@ class TaskTable
   # turn on all the watches.
   # options: { persistent, debounceInterval, interval }
   activate: (options) ->
-    options.debug = logging.debug
+    options.debug = (text) -> logging.debug "watch: #{text}"
     promises = []
-    for name in @getNames()
+    for name in @getNames() then do (name) =>
       task = @getTask(name)
       if task.watch?
-        watcher = globwatcher.globwatcher(task.watch, persistent: false)
+        watcher = globwatcher.globwatcher(task.watch, options)
         handler = =>
           if @enqueue(name)
             logging.taskinfo "--- File change triggered: #{name}"
