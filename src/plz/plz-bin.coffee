@@ -1,11 +1,13 @@
 nopt = require 'nopt'
 path = require 'path'
 
+Config = require("./config").Config
 logging = require("./logging")
 plz = require("./plz")
 
 longOptions =
   filename: [ path, null ]
+  folder: [ path, null ]
   run: Boolean
   version: Boolean
   help: Boolean
@@ -18,6 +20,7 @@ longOptions =
 shortOptions =
   f: [ "--filename" ]
   r: [ "--run" ]
+  F: [ "--folder" ]
   v: [ "--verbose" ]
   D: [ "--debug" ]
 
@@ -27,37 +30,38 @@ run = ->
   if options.colors then logging.useColors(true)
   if options["no-colors"] then logging.useColors(false)
   if options.verbose then logging.setVerbose(true)
-  if options.debug
-    logging.setVerbose(true)
-    logging.setDebug(true)
+  if options.debug then logging.setDebug(true)
+  if options.folder then process.chdir(options.folder)
   if options.version
-    console.log "plz #{plz.VERSION}"
+    console.log "plz #{Config.version()}"
     process.exit 0
   if options.help
     console.log(HELP)
   plz.run(options)
 
 HELP = """
-plz #{plz.VERSION}
+plz #{Config.version()}
 usage: plz [options] (task-name [task-options])*
 
 general options are listed below. task-options are all of the form
 "<name>=<value>".
 
 example:
-  plz -f #{plz.DEFAULT_FILENAME} build debug=true run
+  plz -f #{Config.rulesFile()} build debug=true run
 
-  loads rules from #{plz.DEFAULT_FILENAME}, then runs two tasks:
+  loads rules from #{Config.rulesFile()}, then runs two tasks:
     - "build", with options { debug: true }
     - "run", with no options
 
 options:
   --filename FILENAME (-f)
-      use a specific rules file (default: #{plz.DEFAULT_FILENAME})
+      use a specific rules file (default: #{Config.rulesFile()})
   --tasks
       show the list of tasks and their descriptions
   --run (-r)
       stay running, monitoring files for changes
+  --folder FOLDER (-F)
+      move into a folder before running
   --help
       this help
   --version

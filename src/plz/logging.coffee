@@ -1,13 +1,23 @@
 sprintf = require 'sprintf'
 
 usingColors = process.stdout.isTTY
-useColors = (bool) -> usingColors = bool
+useColors = (bool) ->
+  if bool? then usingColors = bool
+  usingColors
 
 isVerbose = false
-setVerbose = (bool) -> isVerbose = bool
+setVerbose = (bool) ->
+  if bool?
+    isVerbose = bool
+    if not bool then isDebug = false
+  isVerbose
 
 isDebug = false
-setDebug = (bool) -> isDebug = bool
+setDebug = (bool) ->
+  if bool?
+    isDebug = bool
+    if bool then isVerbose = true
+  isDebug
 
 colors =
   yellow: "33;1"

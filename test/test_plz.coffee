@@ -7,6 +7,7 @@ should = require 'should'
 touch = require 'touch'
 util = require 'util'
 
+rulesfile = require("../lib/plz/rulesfile")
 test_util = require("./test_util")
 futureTest = test_util.futureTest
 withTempFolder = test_util.withTempFolder
@@ -17,43 +18,6 @@ dump = (x) -> util.inspect x, false, null, true
 
 
 describe "plz", ->
-  it "findRulesFile", futureTest withTempFolder (folder) ->
-    fs.writeFileSync "#{folder}/rules.x", "hello."
-    options = { filename: "rules.x" }
-    # find with explicit filename.
-    plz.findRulesFile(options)
-    .then (options) ->
-      options.cwd.should.eql(folder)
-      options.filename.should.eql("#{folder}/rules.x")
-      # find in current folder.
-      options = {}
-      fs.writeFileSync "#{folder}/#{plz.DEFAULT_FILENAME}", "hello."
-      plz.findRulesFile(options)
-    .then (options) ->
-      options.cwd.should.eql(folder)
-      options.filename.should.eql("#{folder}/#{plz.DEFAULT_FILENAME}")
-      # find by walking up folders.
-      options = {}
-      shell.mkdir "-p", "#{folder}/nested/very/deeply"
-      process.chdir("#{folder}/nested/very/deeply")
-      fs.writeFileSync "#{folder}/nested/#{plz.DEFAULT_FILENAME}", "hello."
-      plz.findRulesFile(options)
-    .then (options) ->
-      options.cwd.should.eql("#{folder}/nested")
-      options.filename.should.eql("#{folder}/nested/#{plz.DEFAULT_FILENAME}")
-
-  describe "compileRulesFile", ->
-    it "compiles", futureTest withTempFolder (folder) ->
-      code = "task 'destroy', run: -> 3"
-      plz.compileRulesFile("test.coffee", code).then (table) ->
-        table.getNames().should.eql [ "destroy" ]
-
-    it "can call 'require'", futureTest withTempFolder (folder) ->
-      code = "name = require('./name').name; task name, run: -> 3"
-      fs.writeFileSync "#{folder}/name.coffee", "exports.name = 'daffy'\n"
-      plz.compileRulesFile("#{folder}/test.coffee", code).then (table) ->
-        table.getNames().should.eql [ "daffy" ]
-
   it "parseTaskList", futureTest ->
     parse = (list) -> plz.parseTaskList(argv: { remain: list })
     parse([ "clean", "build" ]).then (options) ->
@@ -88,4 +52,3 @@ describe "plz", ->
         [ "all", {} ]
       ]
       options.globals.should.eql({})
-

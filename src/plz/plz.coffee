@@ -1,4 +1,3 @@
-coffee = require 'coffee-script'
 fs = require 'fs'
 path = require 'path'
 Q = require 'q'
@@ -6,66 +5,12 @@ sprintf = require 'sprintf'
 util = require 'util'
 vm = require 'vm'
 
+Config = require("./config").Config
 context = require("./context")
 logging = require("./logging")
+rulesfile = require("./rulesfile")
 task = require("./task")
 task_table = require("./task_table")
-
-VERSION = "0.5-20130605"
-DEFAULT_FILENAME = "build.plz"
-
-# ----- load rules
-
-loadRules = (options) ->
-  findRulesFile(options)
-  .fail (error) ->
-    if options.help or options.tasks
-      console.log "(No #{DEFAULT_FILENAME} found.)"
-      process.exit 0
-    logging.error "#{error.message}"
-    process.exit 1
-  .then (options) ->
-    readRulesFile(options.filename)
-  .fail (error) ->
-    logging.error "Unable to open #{options.filename}: #{error.stack}"
-    process.exit 1
-  .then (script) ->
-    compileRulesFile(options.filename, script)
-  .fail (error) ->
-    logging.error "#{options.filename} failed to execute: #{error.stack}"
-    process.exit 1
-
-findRulesFile = (options) ->
-  if not options.cwd? then options.cwd = process.cwd()
-  if options.filename?
-    if options.filename[0] != "/" then options.filename = path.join(options.cwd, options.filename)
-    return Q(options) 
-
-  parent = path.dirname(options.cwd)
-  while true
-    options.filename = path.join(options.cwd, DEFAULT_FILENAME)
-    if fs.existsSync(options.filename)
-      process.chdir(options.cwd)
-      return Q(options)
-    if parent == options.cwd then return Q.reject(new Error("Can't find #{DEFAULT_FILENAME}"))
-    options.cwd = parent
-    parent = path.dirname(parent)
-
-readRulesFile = (filename) ->
-  deferred = Q.defer()
-  fs.readFile filename, deferred.makeNodeResolver()
-  deferred.promise
-  .then (data) ->
-    data.toString()
-
-compileRulesFile = (filename, script) ->
-  table = new task_table.TaskTable()
-  try
-    sandbox = context.makeContext(filename, table)
-    coffee["eval"](script, sandbox: sandbox, filename: filename)
-    Q(table)
-  catch error
-    Q.reject(error)
 
 parseTaskList = (options) ->
   tasklist = []
@@ -98,7 +43,7 @@ displayHelp = (table) ->
 
 run = (options) ->
   startTime = Date.now()
-  loadRules(options)
+  rulesfile.loadRules(options)
   .then (table) ->
     table.validate()
     table.consolidate()
@@ -134,10 +79,6 @@ run = (options) ->
     logging.info error.stack
 
 
-exports.VERSION = VERSION
-exports.DEFAULT_FILENAME = DEFAULT_FILENAME
 exports.run = run
-exports.findRulesFile = findRulesFile
-exports.compileRulesFile = compileRulesFile
 exports.parseTaskList = parseTaskList
 
