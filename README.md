@@ -67,16 +67,16 @@ task 'name', description: "do something", run: ->
   a command-line option makes it stay running, watching the requested files,
   and starting commands as they change.
 
+- the config object (with things like "--no-color") is accessible in task
+  files as "plz".
+
+- new tasks can be queued ("queueTask"?) from inside running tasks.
+
 # stories
 
 - plugins can be loaded in some straightforward way from the local
   environment, and add features to the global context (like 'mocha' or
   'coffee').
-
-- the config object (with things like "--no-color") is accessible in task
-  files as "plz".
-
-- new tasks can be queued ("queueTask"?) from inside running tasks.
 
 - a global "project" object can be used to determine at minimum the "type"
   (folder layout, like "node") and "name" (name of the folder), for use by
@@ -85,5 +85,4 @@ task 'name', description: "do something", run: ->
 - any command-line options can be passed in a .plzrc also.
 
 - a "base rules" file can be loaded by naming it in an env var ("PLZRULES"?).
-
 
