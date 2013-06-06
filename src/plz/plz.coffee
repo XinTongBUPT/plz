@@ -12,6 +12,8 @@ rulesfile = require("./rulesfile")
 task = require("./task")
 task_table = require("./task_table")
 
+DEFAULT_TASK = "build"
+
 parseTaskList = (options) ->
   tasklist = []
   globals = {}
@@ -27,7 +29,7 @@ parseTaskList = (options) ->
         tasklist[index][1][m[1]] = m[2]
     else
       throw new Error("I don't know what to do with '#{word}'")
-  if tasklist.length == 0 then tasklist.push [ "all", {} ]
+  if tasklist.length == 0 then tasklist.push [ DEFAULT_TASK, {} ]
   options.tasklist = tasklist
   options.globals = globals
   Q(options)

@@ -49,6 +49,6 @@ describe "plz", ->
       parse([ ])
     .then (options) ->
       options.tasklist.should.eql [
-        [ "all", {} ]
+        [ "build", {} ]
       ]
       options.globals.should.eql({})
