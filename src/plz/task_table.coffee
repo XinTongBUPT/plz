@@ -121,7 +121,7 @@ class TaskTable
     logging.debug "Run tasks: #{tasklist.map((x) -> x[0]).join(' ')}"
     @state = "running"
     @runTasks(tasklist).then =>
-      again = (@state == "run-again") or (@queue.size > 0)
+      again = (@state == "run-again") or (@queue.length > 0)
       @state = "waiting"
       if again then @runQueue()
 

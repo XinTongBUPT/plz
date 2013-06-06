@@ -10,6 +10,7 @@ touch = require 'touch'
 util = require 'util'
 vm = require 'vm'
 
+Config = require("./config").Config
 logging = require("./logging")
 task = require("./task")
 
@@ -82,6 +83,7 @@ defaultGlobals =
     logging.info "+ touch #{trace(args)}"
     touch.sync(args...)
   exec: exec
+  plz: Config
 
 makeContext = (filename, table) ->
   globals = {}
@@ -95,6 +97,9 @@ makeContext = (filename, table) ->
   globals.task = (name, options) ->
     logging.debug "Defining task: #{name}"
     table.addTask(new task.Task(name, options))
+  globals.runTask = (name, args={}) ->
+    logging.debug "Injecting task: #{name}"
+    table.enqueue(name, args)
 
   magick(filename, globals)
   vm.createContext(globals)

@@ -97,6 +97,16 @@ describe "bin/plz", ->
       fs.writeFileSync "#{folder}/die.x", "die!"
     Q.all([ f1, f2 ])
 
+  it "can get and set configs", futureTest withTempFolder (folder) ->
+    fs.writeFileSync "#{folder}/rules", CONFIG_TEST
+    execFuture("#{binplz} -f rules test").then (p) ->
+      p.stdout.should.match(/ok!\ninfo 1\ndone\n/)
+
+  it "can enqueue a task manually", futureTest withTempFolder (folder) ->
+    fs.writeFileSync "#{folder}/rules", ENQUEUE_TEST
+    execFuture("#{binplz} -f rules start").then (p) ->
+      p.stdout.should.match(/start\ncontinue\n/)
+
 
 SHELL_TEST = """
 task "wiggle", run: ->
@@ -152,4 +162,23 @@ task "end", watch: "%FOLDER%/die.x", run: ->
   echo "goodbye"
   process.exit 0
 
+"""
+
+CONFIG_TEST = """
+task "test", run: ->
+  notice "\#{plz.version()} ok!"
+  plz.logVerbose(true)
+  info "info 1"
+  plz.logVerbose(false)
+  info "info 2"
+  notice "done"
+"""
+
+ENQUEUE_TEST = """
+task "start", run: ->
+  echo "start"
+  runTask "continue"
+
+task "continue", run: ->
+  echo "continue"
 """
