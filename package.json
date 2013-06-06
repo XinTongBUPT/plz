@@ -1,10 +1,11 @@
 {
   "name": "plz",
-  "version": "1.0.0",
-  "description": "?",
-  "keywords": [ "?", "?" ],
+  "version": "0.5.0",
+  "description": "simple build automation",
+  "keywords": [ "make", "build" ],
   "author": "Robey Pointer <robeypointer@gmail.com>",
   "homepage": "https://github.com/robey/plz",
+  "bugs": "https://github.com/robey/plz/issues",
   "repository": {
     "type": "git",
     "url": "git://github.com/robey/plz.git"
@@ -32,10 +33,17 @@
     "mocha": "*",
     "should": "*"
   },
-  "main": "./lib/stake",
+  "main": "./lib/plz",
   "files": [
-    "Cakefile",
-    "lib",
-    "test"
-  ]
+    "lib/",
+    "bin/plz"
+  ],
+  "bin": {
+    "plz": "bin/plz"
+  },
+  "preferGlobal": "true",
+  "engines": {
+    "node" : ">=0.10.1"
+  }
+
 }

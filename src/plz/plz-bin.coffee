@@ -1,10 +1,8 @@
-#!/usr/bin/env coffee
-
 nopt = require 'nopt'
 path = require 'path'
 
-logging = require("../src/plz/logging")
-plz = require("../src/plz/plz")
+logging = require("./logging")
+plz = require("./plz")
 
 longOptions =
   filename: [ path, null ]
@@ -40,6 +38,7 @@ run = ->
   plz.run(options)
 
 HELP = """
+plz #{plz.VERSION}
 usage: plz [options] (task-name [task-options])*
 
 general options are listed below. task-options are all of the form
@@ -49,7 +48,7 @@ example:
   plz -f #{plz.DEFAULT_FILENAME} build debug=true run
 
   loads rules from #{plz.DEFAULT_FILENAME}, then runs two tasks:
-    - "build", with option "debug=true"
+    - "build", with options { debug: true }
     - "run", with no options
 
 options:
@@ -72,4 +71,4 @@ options:
 
 """
 
-run()
+exports.run = run

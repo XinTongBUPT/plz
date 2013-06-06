@@ -73,9 +73,10 @@ task 'name', description: "do something", run: ->
   environment, and add features to the global context (like 'mocha' or
   'coffee').
 
-- globals accessible in the task files include "config" for read-only access
-  to command-line config parameters like "--no-color" and "queueTask" to
-  queue up a new task to run.
+- the config object (with things like "--no-color") is accessible in task
+  files as "plz".
+
+- new tasks can be queued ("queueTask"?) from inside running tasks.
 
 - a global "project" object can be used to determine at minimum the "type"
   (folder layout, like "node") and "name" (name of the folder), for use by

@@ -11,7 +11,7 @@ logging = require("./logging")
 task = require("./task")
 task_table = require("./task_table")
 
-VERSION = "0.3-20130511"
+VERSION = "0.5-20130605"
 DEFAULT_FILENAME = "build.plz"
 
 # ----- load rules

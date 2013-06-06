@@ -66,33 +66,35 @@ magick = (filename, context) ->
 
 trace = (args) -> args.map((x) -> util.inspect(x)).join(' ')
 
+defaultGlobals =
+  # copy from node
+  console: console
+  process: process
+  Buffer: Buffer
+  # logging:
+  debug: logging.debug
+  info: logging.info
+  notice: logging.notice
+  warning: logging.warning
+  error: logging.error  
+  # local convenience
+  touch: (args...) ->
+    logging.info "+ touch #{trace(args)}"
+    touch.sync(args...)
+  exec: exec
+
 makeContext = (filename, table) ->
-  globals =
-    # copy from node
-    console: console
-    process: process
-    Buffer: Buffer
-    # logging:
-    debug: logging.debug
-    info: logging.info
-    notice: logging.notice
-    warning: logging.warning
-    error: logging.error
-
-    task: (name, options) ->
-      logging.debug "Defining task: #{name}"
-      table.addTask(new task.Task(name, options))
-
+  globals = {}
+  for k, v of defaultGlobals then globals[k] = v
   for command in ShellCommands then do (command) ->
     globals[command] = (args...) ->
       logging.info "+ #{command} #{trace(args)}"
       shell[command](args...)
 
-  globals.touch = (args...) ->
-    logging.info "+ touch #{trace(args)}"
-    touch.sync(args...)
-
-  globals.exec = exec
+  # define new task
+  globals.task = (name, options) ->
+    logging.debug "Defining task: #{name}"
+    table.addTask(new task.Task(name, options))
 
   magick(filename, globals)
   vm.createContext(globals)
