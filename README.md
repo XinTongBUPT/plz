@@ -18,6 +18,8 @@ make simple tasks trivial, and difficult tasks easier. Highlights:
 Install
 -------
 
+Make sure you have node installed (http://nodejs.org/), then:
+
 ```sh
 $ sudo npm install -g plz --registry http://www.lag.net/npm
 ```
