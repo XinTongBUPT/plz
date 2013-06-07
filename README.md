@@ -15,10 +15,50 @@ make simple tasks trivial, and difficult tasks easier. Highlights:
   patterns.
 
 
+Install
+-------
+
+```sh
+$ sudo npm install -g plz --registry http://www.lag.net/npm
+```
+
+
 Example
 -------
 
-TBD
+Here's a sample `build.plz` rules file that says:
+
+- for "build", compile coffeescript from `src/` to `lib/`
+- whenever anything in `lib/` changes, run the (mocha) tests again
+
+Since it's just a normal script, we pull out the coffee & mocha binaries to
+the top, in case we need to change them later.
+
+```coffeescript
+coffee = "./node_modules/coffee-script/bin/coffee"
+mocha = "./node_modules/mocha/bin/mocha"
+
+task "build", description: "compile coffeescript", run: ->
+  mkdir "-p", "lib"
+  exec "#{coffee} -o lib -c src"
+
+task "test", description: "run unit tests", watch: "lib/**/*", run: (options) ->
+  display = options.display or "spec"
+  exec "#{mocha} -R #{display} --compilers coffee:coffee-script --colors"
+```
+
+You can run plz alone, which will find the `build.plz` and run the default
+rule (`build`):
+
+```sh
+$ plz
+```
+
+or you can run tests alone, choosing the dot display:
+
+```sh
+$ plz test display=dot
+```
 
 
 API
