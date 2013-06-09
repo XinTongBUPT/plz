@@ -3,9 +3,11 @@
 #
 
 child_process = require 'child_process'
+coffee = require 'coffee-script'
+fs = require 'fs'
 path = require 'path'
-shell = require 'shelljs'
 Q = require 'q'
+shell = require 'shelljs'
 touch = require 'touch'
 util = require 'util'
 vm = require 'vm'
@@ -19,6 +21,7 @@ ShellCommands = [
   "cat", "cd", "chmod", "cp", "dirs", "echo", "env", "exit", "find", "grep",
   "ls", "mkdir", "mv", "popd", "pushd", "pwd", "rm", "sed", "test", "which"
 ]
+
 
 exec = (command, options={}) ->
   if typeof command == "string"
@@ -49,6 +52,21 @@ exec = (command, options={}) ->
   promise = deferred.promise
   promise.process = p
   promise
+
+# try to load a plugin, first by searching plugin_path, and then by node's usual mechanism.
+loadPlugin = (name) ->
+  user_home = process.env["HOME"] or process.env["USERPROFILE"]
+  plugin_path = [ "#{user_home}/.plz/plugins", "#{process.cwd()}/.plz/plugins" ]
+  if process.env["PLZPATH"]? then plugin_path.push process.env["PLZPATH"]
+  plugin_path = plugin_path.map (folder) -> path.resolve(folder)
+
+  for path in plugin_path
+    for filename in [ "#{path}/plz-#{name}.js", "#{path}/plz-#{name}.coffee" ]
+      if fs.existsSync(filename)
+        logging.debug "load plugin from #{filename}"
+        eval$(fs.readFileSync(filename), filename: filename)
+        return
+  throw new Error("Can't find plugin: #{name}")
 
 # gibberish copied over from coffee-script.
 magick = (filename, context) ->
@@ -84,6 +102,7 @@ defaultGlobals =
     touch.sync(args...)
   exec: exec
   plz: Config
+  plugin: loadPlugin
 
 makeContext = (filename, table) ->
   globals = {}
@@ -104,8 +123,24 @@ makeContext = (filename, table) ->
   magick(filename, globals)
   vm.createContext(globals)
 
+# have to save the current context for recursive calls.
+contextStack = [ null ]
+eval$ = (data, options={}) ->
+  # FIXME detect js and dtrt
+  js = coffee.compile(data.toString(), bare: true)
+  sandbox = options.sandbox or contextStack[0]
+  contextStack.unshift sandbox
+  try
+    if sandbox?
+      vm.runInContext(js, sandbox)
+    else
+      vm.runInThisContext(js)
+  finally
+    contextStack.shift()
+
 
 exports.makeContext = makeContext
+exports.eval$ = eval$
 
 # to-do:
 #   - execute another task (invoke?)

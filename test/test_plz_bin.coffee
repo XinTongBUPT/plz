@@ -107,6 +107,23 @@ describe "bin/plz", ->
     execFuture("#{binplz} -f rules start").then (p) ->
       p.stdout.should.match(/start\ncontinue\n/)
 
+  describe "can load modules", ->
+    it "from PLZPATH", futureTest withTempFolder (folder) ->
+      shell.mkdir "-p", "#{folder}/hidden"
+      fs.writeFileSync "#{folder}/hidden/plz-whine.coffee", LOAD_TEST_WHINE
+      fs.writeFileSync "#{folder}/rules", LOAD_TEST
+      env = { "PLZPATH": "#{folder}/hidden" }
+      for k, v of process.env then env[k] = v
+      execFuture("#{binplz} -f rules", env: env).then (p) ->
+        p.stdout.should.match(/whine.\nloaded.\n/)
+
+    it "from .plz/plugins/", futureTest withTempFolder (folder) ->
+      shell.mkdir "-p", "#{folder}/.plz/plugins"
+      fs.writeFileSync "#{folder}/.plz/plugins/plz-whine.coffee", LOAD_TEST_WHINE
+      fs.writeFileSync "#{folder}/rules", LOAD_TEST
+      execFuture("#{binplz} -f rules").then (p) ->
+        p.stdout.should.match(/whine.\nloaded.\n/)
+
 
 SHELL_TEST = """
 task "wiggle", run: ->
@@ -181,4 +198,16 @@ task "start", run: ->
 
 task "continue", run: ->
   echo "continue"
+"""
+
+LOAD_TEST = """
+plugin "whine"
+
+task "build", run: ->
+  console.log "loaded."
+"""
+
+LOAD_TEST_WHINE = """
+task "prebuild", before: "build", run: ->
+  console.log "whine."
 """

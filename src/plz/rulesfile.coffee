@@ -1,4 +1,3 @@
-coffee = require 'coffee-script'
 fs = require 'fs'
 path = require 'path'
 Q = require 'q'
@@ -56,7 +55,7 @@ compileRulesFile = ->
 compile = (data) ->
   table = new TaskTable()
   sandbox = context.makeContext(Config.rulesFile(), table)
-  coffee["eval"](data.toString(), sandbox: sandbox, filename: Config.rulesFile())
+  context.eval$(data, sandbox: sandbox, filename: Config.rulesFile())
   table
 
 
