@@ -4,8 +4,8 @@ plz
 Plz is a script automation system like "make", "rake", and "cake". It aims to
 make simple tasks trivial, and difficult tasks easier. Highlights:
 
-- No waiting for a JVM to launch. Rules are written in coffeescript and
-  executed by the (fast) v8 engine. 
+- No waiting for a JVM to launch. Rules are written in coffeescript (or
+  javascript) and executed by the (fast) v8 engine. 
 - No console spew. The default logging level runs silent unless there's an
   error.
 - Most of the basic shell commands are exposed as global functions via
@@ -66,7 +66,58 @@ $ plz test display=dot
 API
 ---
 
-TBD
+FIXME...
+
+Tasks are defined with the `task` function:
+
+```coffeescript
+task(name, options)
+```
+
+The options are:
+
+- `description`: a help line to be displayed for `--help` or `--tasks`
+- `must`: list of tasks that this task depends on
+- `watch`: list of file globs that will cause this task to run
+- `before` or `after`: combine this rule with another existing rule
+- `run`: the actual code to run for this task
+
+
+Dependent tasks
+---------------
+
+FIXME...
+
+
+File watches
+------------
+
+FIXME...
+
+
+Before and after tasks
+----------------------
+
+A task can ask to run before or after some other task, like:
+
+```coffeescript
+task "prebuild", before: "build", run: ->
+  # perform some setup work
+```
+
+These "barnacle" tasks won't appear in the task list for `--help` or
+`--tasks`. They're combined with the task they're modifying. So in this case,
+the "build" task will run the setup work defined in "prebuild" before running
+its own code.
+
+Here's another example, which will print the letters A, B, C in order when the
+task "hello" is executed:
+
+```coffeescript
+task "hello", run: -> notice "B"
+task "pre-hello", before: "hello", run: -> notice "A"
+task "post-hello", after: "hello", run: -> notice "C"
+```
 
 
 Manifesto
