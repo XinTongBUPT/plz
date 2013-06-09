@@ -35,7 +35,7 @@
   },
   "main": "./lib/plz",
   "files": [
-    "lib/**/*",
+    "lib/plz/*",
     "bin/plz"
   ],
   "bin": {

@@ -52,7 +52,11 @@ task 'name', description: "do something", run: ->
 - new tasks can be queued ("queueTask"?) from inside running tasks.
 
 
-# stories
+# unfinished stories
+
+- javascript should be okay (just detect a lack of "->").
+
+- plugins can be loaded via a "plugin" function that searches PLZPATH.
 
 - plugins can be loaded in some straightforward way from the local
   environment, and add features to the global context (like 'mocha' or

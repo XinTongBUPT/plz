@@ -8,9 +8,10 @@ task "build", description: "compile coffeescript", run: ->
 
 task "test", description: "run unit tests", watch: "lib/**/*", run: (options) ->
   display = options.display or "spec"
+  grep = if options.grep? then "--grep #{options.grep}" else ""
   # watch is very very slow, so allow for deathly slow tests.
   speed = "--timeout 5000 --slow 1000"
-  exec "#{mocha} #{speed} -R #{display} --compilers coffee:coffee-script --colors"
+  exec "#{mocha} #{speed} -R #{display} #{grep} --compilers coffee:coffee-script --colors"
 
 task "clean", description: "erase built files", run: ->
   rm "-rf", "lib"
