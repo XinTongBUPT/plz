@@ -38,11 +38,19 @@ describe "rulesfile", ->
       Config.cwd().should.eql("#{folder}/nested")
       Config.rulesFile().should.eql("#{folder}/nested/#{rulesfile.DEFAULT_FILENAME}")
 
-  it "compiles", futureTest withTempFolder (folder) ->
+  it "compiles coffeescript", futureTest withTempFolder (folder) ->
     Q(null).then ->
       code = "task 'destroy', run: -> 3"
       table = rulesfile.compile(code)
       table.getNames().should.eql [ "destroy" ]
+      table.getTask("destroy").run().should.eql(3)
+
+  it "evals javascript", futureTest withTempFolder (folder) ->
+    Q(null).then ->
+      code = "task('destroy', { run: function() { return 3; } });"
+      table = rulesfile.compile(code)
+      table.getNames().should.eql [ "destroy" ]
+      table.getTask("destroy").run().should.eql(3)
 
   it "can call 'require'", futureTest withTempFolder (folder) ->
     fs.writeFileSync "#{folder}/test.x", "name = require('./name').name; task name, run: -> 3"

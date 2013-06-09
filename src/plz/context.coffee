@@ -125,14 +125,16 @@ makeContext = (filename, table) ->
 
 # have to save the current context for recursive calls.
 contextStack = [ null ]
-eval$ = (data, options={}) ->
-  # FIXME detect js and dtrt
-  js = coffee.compile(data.toString(), bare: true)
+eval$ = (code, options={}) ->
+  code = code.toString()
+  # FIXME can we do better at detecting js?
+  isCoffee = (code.indexOf("->") > 0)
+  if isCoffee then code = coffee.compile(code, bare: true)
   sandbox = options.sandbox or contextStack[0]
   contextStack.unshift sandbox
   try
     if sandbox?
-      vm.runInContext(js, sandbox)
+      vm.runInContext(code, sandbox)
     else
       vm.runInThisContext(js)
   finally
