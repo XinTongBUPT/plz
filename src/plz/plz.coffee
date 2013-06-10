@@ -72,6 +72,7 @@ run = (options) ->
   .then (settings) ->
     table = options.table
     parseTaskList(options, settings)
+    logging.debug "Settings: #{util.inspect(settings)}"
     for name in options.tasklist
       if not table.getTask(name)? then throw new Error("No task named '#{name}'")
     table.activate(persistent: options.run, interval: 250)

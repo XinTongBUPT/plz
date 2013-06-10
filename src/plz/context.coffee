@@ -63,7 +63,7 @@ loadPlugin = (name) ->
   for path in plugin_path
     for filename in [ "#{path}/plz-#{name}.js", "#{path}/plz-#{name}.coffee" ]
       if fs.existsSync(filename)
-        logging.debug "load plugin from #{filename}"
+        logging.debug "Loading plugin: #{filename}"
         eval$(fs.readFileSync(filename), filename: filename)
         return
   throw new Error("Can't find plugin: #{name}")
@@ -121,7 +121,7 @@ makeContext = (filename, table) ->
     table.enqueue(name, args)
 
   globals.settings = table.settings
-  
+
   magick(filename, globals)
   vm.createContext(globals)
 
