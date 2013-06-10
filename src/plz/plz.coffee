@@ -13,21 +13,43 @@ task = require("./task")
 task_table = require("./task_table")
 
 DEFAULT_TASK = "build"
+SETTING_RE = /^(\w[-\w]*)=(.*)$/
 
-parseTaskList = (options) ->
+parseTaskList = (options, settings={}) ->
   tasklist = []
-  settings = {}
   for word in options.argv.remain
     if word.match task.TASK_REGEX
       tasklist.push word
-    else if (m = word.match /([-\w]+)=(.*)/)
+    else if (m = word.match SETTING_RE)
       settings[m[1]] = m[2]
     else
       throw new Error("I don't know what to do with '#{word}'")
   if tasklist.length == 0 then tasklist.push DEFAULT_TASK
   options.tasklist = tasklist
-  options.settings = settings
-  Q(options)
+  [ tasklist, settings ]
+
+readRcFile = (settings) ->
+  filename = if process.env["PLZRC"]?
+    process.env["PLZRC"]
+  else
+    user_home = process.env["HOME"] or process.env["USERPROFILE"]
+    "#{user_home}/.plzrc"
+  if fs.existsSync(filename)
+    deferred = Q.defer()
+    fs.readFile filename, (error, data) ->
+      if error?
+        deferred.reject(error)
+      else
+        for line in data.toString().split("\n")
+          line = line.trim()
+          if line.match /^\#/
+            # ignore
+          else if (m = line.match SETTING_RE)
+            settings[m[1]] = m[2]
+        deferred.resolve(settings)
+    deferred.promise
+  else
+    Q(settings)
 
 displayHelp = (table) ->
   taskNames = table.getNames()
@@ -45,17 +67,17 @@ run = (options) ->
     table.validate()
     table.consolidate()
     if options.help or options.tasks then displayHelp(table)
-    parseTaskList(options)
+    options.table = table
+    readRcFile(table.settings)
+  .then (settings) ->
+    table = options.table
+    parseTaskList(options, settings)
     for name in options.tasklist
       if not table.getTask(name)? then throw new Error("No task named '#{name}'")
-    options.table = table
-    for k, v of options.settings then table.settings[k] = v
+    table.activate(persistent: options.run, interval: 250)
   .fail (error) ->
     logging.error "#{error.stack}"
     process.exit 1
-  .then ->
-    table = options.table
-    table.activate(persistent: options.run, interval: 250)
   .then ->
     table = options.table
     for name in options.tasklist then table.enqueue(name)

@@ -18,28 +18,20 @@ dump = (x) -> util.inspect x, false, null, true
 
 
 describe "plz", ->
-  it "parseTaskList", futureTest ->
+  it "parseTaskList", ->
     parse = (list) -> plz.parseTaskList(argv: { remain: list })
-    parse([ "clean", "build" ]).then (options) ->
-      options.tasklist.should.eql([ "clean", "build" ])
-      options.settings.should.eql({})
-    .then ->
-      parse([ "setup", "dbhost=db.example.com", "port=900" ])
-    .then (options) ->
-      options.tasklist.should.eql [ "setup" ]
-      options.settings.should.eql(dbhost: "db.example.com", port: "900")
-    .then ->
-      parse([ "clean", "setup", "port=900", "erase", "x=several words", "install" ])
-    .then (options) ->
-      options.tasklist.should.eql [ "clean", "setup", "erase", "install" ]
-      options.settings.should.eql(port: "900", x: "several words")
-    .then ->
-      parse([ "name=ralph", "start" ])
-    .then (options) ->
-      options.tasklist.should.eql [ "start" ]
-      options.settings.should.eql(name: "ralph")
-    .then ->
-      parse([ ])
-    .then (options) ->
-      options.tasklist.should.eql [ "build" ]
-      options.settings.should.eql({})
+    [ tasklist, settings ] = parse([ "clean", "build" ])
+    tasklist.should.eql([ "clean", "build" ])
+    settings.should.eql({})
+    [ tasklist, settings ] = parse([ "setup", "dbhost=db.example.com", "port=900" ])
+    tasklist.should.eql [ "setup" ]
+    settings.should.eql(dbhost: "db.example.com", port: "900")
+    [ tasklist, settings ] = parse([ "clean", "setup", "port=900", "erase", "x=several words", "install" ])
+    tasklist.should.eql [ "clean", "setup", "erase", "install" ]
+    settings.should.eql(port: "900", x: "several words")
+    [ tasklist, settings ] = parse([ "name=ralph", "start" ])
+    tasklist.should.eql [ "start" ]
+    settings.should.eql(name: "ralph")
+    [ tasklist, settings ] = parse([ ])
+    tasklist.should.eql [ "build" ]
+    settings.should.eql({})

@@ -118,7 +118,7 @@ describe "bin/plz", ->
       fs.writeFileSync "#{folder}/plzrc", "citrus=hello there\n"
       env = { "PLZRC": "#{folder}/plzrc" }
       for k, v of process.env then env[k] = v
-      execFuture("#{binplz} -f rules citrus=\'hello there\'", env: env).then (p) ->
+      execFuture("#{binplz} -f rules", env: env).then (p) ->
         p.stdout.should.match(/^hello there\n/)
 
     it "into the run function as a parameter", futureTest withTempFolder (folder) ->
