@@ -143,6 +143,20 @@ describe "bin/plz", ->
       execFuture("#{binplz} -f rules").then (p) ->
         p.stdout.should.match(/whine.\nloaded.\n/)
 
+    it "delayed from within a file", futureTest withTempFolder (folder) ->
+      shell.mkdir "-p", "#{folder}/.plz/plugins"
+      fs.writeFileSync "#{folder}/.plz/plugins/plz-whine.coffee", LOAD_TEST_DELAYED
+      fs.writeFileSync "#{folder}/rules", LOAD_TEST
+      execFuture("#{binplz} -f rules").then (p) ->
+        p.stdout.should.match(/whine.\nloaded.\n/)
+
+    it "delayed from within a different file", futureTest withTempFolder (folder) ->
+      shell.mkdir "-p", "#{folder}/.plz/plugins"
+      fs.writeFileSync "#{folder}/.plz/plugins/plz-smile.coffee", LOAD_TEST_DELAYED_2
+      fs.writeFileSync "#{folder}/rules", LOAD_TEST_2
+      execFuture("#{binplz} -f rules").then (p) ->
+        p.stdout.should.match(/whine.\nloaded.\n/)
+
 
 SHELL_TEST = """
 task "wiggle", run: ->
@@ -239,4 +253,24 @@ task "build", run: ->
 LOAD_TEST_WHINE = """
 task "prebuild", before: "build", run: ->
   console.log "whine."
+"""
+
+LOAD_TEST_DELAYED = """
+plugins.whine = ->
+  task "prebuild", before: "build", run: ->
+    console.log "whine."
+"""
+
+LOAD_TEST_DELAYED_2 = """
+plugins.whine = ->
+  task "prebuild", before: "build", run: ->
+    console.log "whine."
+"""
+
+LOAD_TEST_2 = """
+plugin "smile"
+plugin "whine"
+
+task "build", run: ->
+  console.log "loaded."
 """

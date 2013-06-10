@@ -55,6 +55,8 @@ task 'name', description: "do something", run: ->
 
 - plugins can be loaded via a "plugin" function that searches PLZPATH.
 
+- any command-line options can be passed in a .plzrc also (PLZRC).
+
 
 # unfinished stories
 
@@ -63,8 +65,6 @@ task 'name', description: "do something", run: ->
 - a global "project" object can be used to determine at minimum the "type"
   (folder layout, like "node") and "name" (name of the folder), for use by
   plugins.
-
-- any command-line options can be passed in a .plzrc also.
 
 - a "base rules" file can be loaded by naming it in an env var ("PLZRULES"?).
 

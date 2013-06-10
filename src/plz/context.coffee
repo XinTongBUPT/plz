@@ -22,6 +22,7 @@ ShellCommands = [
   "ls", "mkdir", "mv", "popd", "pushd", "pwd", "rm", "sed", "test", "which"
 ]
 
+plugins = {}
 
 exec = (command, options={}) ->
   if typeof command == "string"
@@ -55,6 +56,9 @@ exec = (command, options={}) ->
 
 # try to load a plugin, first by searching plugin_path, and then by node's usual mechanism.
 loadPlugin = (name) ->
+  if plugins[name]?
+    return plugins[name]()
+
   user_home = process.env["HOME"] or process.env["USERPROFILE"]
   plugin_path = [ "#{user_home}/.plz/plugins", "#{process.cwd()}/.plz/plugins" ]
   if process.env["PLZPATH"]? then plugin_path.push process.env["PLZPATH"]
@@ -65,6 +69,8 @@ loadPlugin = (name) ->
       if fs.existsSync(filename)
         logging.debug "Loading plugin: #{filename}"
         eval$(fs.readFileSync(filename), filename: filename)
+        # plugin could be indirect
+        if plugins[name]? then plugins[name]()
         return
   throw new Error("Can't find plugin: #{name}")
 
@@ -103,6 +109,7 @@ defaultGlobals =
   exec: exec
   plz: Config
   plugin: loadPlugin
+  plugins: plugins
 
 makeContext = (filename, table) ->
   globals = {}
@@ -145,6 +152,3 @@ eval$ = (code, options={}) ->
 
 exports.makeContext = makeContext
 exports.eval$ = eval$
-
-# to-do:
-#   - execute another task (invoke?)
