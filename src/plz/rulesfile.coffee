@@ -1,6 +1,7 @@
 fs = require 'fs'
 path = require 'path'
 Q = require 'q'
+util = require 'util'
 
 context = require("./context")
 Config = require("./config").Config
@@ -39,20 +40,20 @@ findRulesFile = (options={}) ->
     Config.cwd(parent)
     parent = path.dirname(parent)
 
-compileRulesFile = ->
+compileRulesFile = (settings) ->
   deferred = Q.defer()
   fs.readFile Config.rulesFile(), (error, data) ->
     try
       if error?
         logging.error("Unable to open #{Config.rulesFile()}: #{error.stack}")
         throw error
-      deferred.resolve(compile(data))
+      deferred.resolve(compile(data, settings))
     catch error
       logging.error "#{Config.rulesFile()} failed to execute: #{error.stack}"
       deferred.reject(error)
   deferred.promise
 
-compile = (data) ->
+compile = (data, settings={}) ->
   table = new TaskTable()
   sandbox = context.makeContext(Config.rulesFile(), table)
   context.eval$(data, sandbox: sandbox, filename: Config.rulesFile())

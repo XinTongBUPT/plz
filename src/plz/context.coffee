@@ -120,6 +120,8 @@ makeContext = (filename, table) ->
     logging.debug "Injecting task: #{name}"
     table.enqueue(name, args)
 
+  globals.settings = table.settings
+  
   magick(filename, globals)
   vm.createContext(globals)
 

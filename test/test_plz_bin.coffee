@@ -107,6 +107,25 @@ describe "bin/plz", ->
     execFuture("#{binplz} -f rules start").then (p) ->
       p.stdout.should.match(/start\ncontinue\n/)
 
+  describe "can deliver settings to a task", ->
+    it "from the command line", futureTest withTempFolder (folder) ->
+      fs.writeFileSync "#{folder}/rules", SETTINGS_TEST_1
+      execFuture("#{binplz} -f rules citrus=\'hello there\'").then (p) ->
+        p.stdout.should.match(/^hello there\n/)
+
+    it "from a .plzrc file", futureTest withTempFolder (folder) ->
+      fs.writeFileSync "#{folder}/rules", SETTINGS_TEST_1
+      fs.writeFileSync "#{folder}/plzrc", "citrus=hello there\n"
+      env = { "PLZRC": "#{folder}/plzrc" }
+      for k, v of process.env then env[k] = v
+      execFuture("#{binplz} -f rules citrus=\'hello there\'", env: env).then (p) ->
+        p.stdout.should.match(/^hello there\n/)
+
+    it "into the run function as a parameter", futureTest withTempFolder (folder) ->
+      fs.writeFileSync "#{folder}/rules", SETTINGS_TEST_2
+      execFuture("#{binplz} -f rules citrus=\'hello there\'").then (p) ->
+        p.stdout.should.match(/^hello there\n/)
+
   describe "can load modules", ->
     it "from PLZPATH", futureTest withTempFolder (folder) ->
       shell.mkdir "-p", "#{folder}/hidden"
@@ -198,6 +217,16 @@ task "start", run: ->
 
 task "continue", run: ->
   echo "continue"
+"""
+
+SETTINGS_TEST_1 = """
+task "build", run: ->
+  console.log settings.citrus
+"""
+
+SETTINGS_TEST_2 = """
+task "build", run: (wut) ->
+  console.log wut.citrus
 """
 
 LOAD_TEST = """

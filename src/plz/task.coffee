@@ -20,11 +20,10 @@ class Task
     @description = options.description or options.desc or "(unknown)"
     run = options.run or (->)
     name = @name
-    @run = (options) ->
+    @run = (settings) ->
       logging.taskinfo ">>> #{name}"
-      logging.debug ">>> #{name}: #{util.inspect(options)}"
       # coerce return value into a promise if it isn't one already.
-      Q(run(options))
+      Q(run(settings))
     @must = options.must
     if typeof @must == "string" then @must = [ @must ]
     @before = options.before?.toString()

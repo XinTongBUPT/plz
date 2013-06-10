@@ -16,22 +16,17 @@ DEFAULT_TASK = "build"
 
 parseTaskList = (options) ->
   tasklist = []
-  globals = {}
-  index = -1
+  settings = {}
   for word in options.argv.remain
     if word.match task.TASK_REGEX
-      index += 1
-      tasklist.push [ word, {} ]
+      tasklist.push word
     else if (m = word.match /([-\w]+)=(.*)/)
-      if index < 0
-        globals[m[1]] = m[2]
-      else
-        tasklist[index][1][m[1]] = m[2]
+      settings[m[1]] = m[2]
     else
       throw new Error("I don't know what to do with '#{word}'")
-  if tasklist.length == 0 then tasklist.push [ DEFAULT_TASK, {} ]
+  if tasklist.length == 0 then tasklist.push DEFAULT_TASK
   options.tasklist = tasklist
-  options.globals = globals
+  options.settings = settings
   Q(options)
 
 displayHelp = (table) ->
@@ -51,9 +46,10 @@ run = (options) ->
     table.consolidate()
     if options.help or options.tasks then displayHelp(table)
     parseTaskList(options)
-    for [ name, args ] in options.tasklist
+    for name in options.tasklist
       if not table.getTask(name)? then throw new Error("No task named '#{name}'")
     options.table = table
+    for k, v of options.settings then table.settings[k] = v
   .fail (error) ->
     logging.error "#{error.stack}"
     process.exit 1
@@ -62,7 +58,7 @@ run = (options) ->
     table.activate(persistent: options.run, interval: 250)
   .then ->
     table = options.table
-    for [ name, args ] in options.tasklist then table.enqueue(name, args)
+    for name in options.tasklist then table.enqueue(name)
     table.runQueue()
   .then ->
     if options.run

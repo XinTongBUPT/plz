@@ -11,6 +11,7 @@ class TaskTable
     @tasks = {}
     @queue = []
     @state = "waiting"
+    @settings = {}
 
   getNames: -> Object.keys(@tasks).sort()
   getTask: (name) -> @tasks[name]
@@ -106,8 +107,8 @@ class TaskTable
       if task.watcher? then task.watcher.close()
 
   # queue a task (by name). doesn't actually run the queue.
-  enqueue: (name, args={}) ->
-    @pushUnique @queue, name, args
+  enqueue: (name) ->
+    @pushUnique @queue, name
 
   # run all queued tasks, and their depedencies. 
   # returns a promise that will resolve when all the tasks have run.
@@ -118,7 +119,7 @@ class TaskTable
       return
     # fill in all the dependencies
     tasklist = @flushQueue([])
-    logging.debug "Run tasks: #{tasklist.map((x) -> x[0]).join(' ')}"
+    logging.debug "Run tasks: #{tasklist.join(' ')}"
     @state = "running"
     @runTasks(tasklist).then =>
       again = (@state == "run-again") or (@queue.length > 0)
@@ -128,8 +129,8 @@ class TaskTable
   # loop through a tasklist, running one at a time, skipping dupes.
   runTasks: (tasklist, executed={}) ->
     if tasklist.length == 0 then return Q(true)
-    [ name, args ] = tasklist.shift()
-    (if executed[name]? Q(null) else @runTask(name, args, executed)).then =>
+    name = tasklist.shift()
+    (if executed[name]? Q(null) else @runTask(name, executed)).then =>
       # remove anything from the queue that's already in the current tasklist.
       @queue = @queue.filter ([ name, args ]) ->
         for [ n, a ] in tasklist then if name == n then return false
@@ -137,9 +138,9 @@ class TaskTable
       @runTasks(tasklist, executed)
 
   # run one task, then check for watch triggers
-  runTask: (name, args, executed={}) ->
+  runTask: (name, executed={}) ->
     executed[name] = true
-    @getTask(name).run(args)
+    @getTask(name).run(@settings)
     .fail (error) ->
       error.message = "Task '#{name}' failed: #{error.message}"
       throw error
@@ -157,10 +158,10 @@ class TaskTable
 
   # flush the queued tasks (and their dependencies) into a given task list.
   flushQueue: (tasklist = [], executed = {}) ->
-    for [ name, args ] in @queue
+    for name in @queue
       for t in @topoSort(name)
         if t == name
-          @pushUnique tasklist, name, args
+          @pushUnique tasklist, name
         else
           @pushUnique tasklist, t
     @queue = []
@@ -180,9 +181,9 @@ class TaskTable
     rv
 
   # add a [ name, args ] to a list, but only if the named task isn't already in the list.
-  pushUnique: (list, name, args={}) ->
-    for [ n, a ] in list then if n == name then return false
-    list.push [ name, args ]
+  pushUnique: (list, name) ->
+    for n in list then if n == name then return false
+    list.push name
     true
 
 
