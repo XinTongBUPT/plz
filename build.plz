@@ -1,20 +1,12 @@
+load "coffee"
+load "mocha"
 
-coffee = "./node_modules/coffee-script/bin/coffee"
-mocha = "./node_modules/mocha/bin/mocha"
-
-task "build", description: "compile coffeescript", run: ->
-  mkdir "-p", "lib"
-  exec "#{coffee} -o lib -c src"
-
-task "test", description: "run unit tests", watch: "lib/**/*", run: (options) ->
-  display = options.display or "spec"
-  grep = if options.grep? then "--grep #{options.grep}" else ""
-  # watch is very very slow, so allow for deathly slow tests.
-  speed = "--timeout 5000 --slow 1000"
-  exec "#{mocha} #{speed} -R #{display} #{grep} --compilers coffee:coffee-script --colors"
+# watch is very very slow, so allow for deathly slow tests.
+settings.mocha_options.push "--timeout 5000 --slow 1000"
 
 task "clean", description: "erase built files", run: ->
   rm "-rf", "lib"
 
 task "distclean", description: "erase everything that wasn't in git", must: "clean", run: ->
   rm "-rf", "node_modules"
+ 
