@@ -6,6 +6,7 @@ util = require 'util'
 context = require("./context")
 Config = require("./config").Config
 logging = require("./logging")
+plugins = require("./plugins")
 TaskTable = require("./task_table").TaskTable
 
 DEFAULT_FILENAME = "build.plz"
@@ -56,7 +57,7 @@ compileRulesFile = (settings) ->
 compile = (data, settings={}) ->
   table = new TaskTable()
   sandbox = context.makeContext(Config.rulesFile(), table)
-  context.eval$(data, sandbox: sandbox, filename: Config.rulesFile())
+  plugins.eval$(data, sandbox: sandbox, filename: Config.rulesFile())
   table
 
 

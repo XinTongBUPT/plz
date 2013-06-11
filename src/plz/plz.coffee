@@ -96,9 +96,6 @@ run = (options) ->
     for name in options.tasklist
       if not table.getTask(name)? then throw new Error("No task named '#{name}'")
     table.activate(persistent: options.run, interval: 250)
-  .fail (error) ->
-    logging.error "#{error.stack}"
-    process.exit 1
   .then ->
     table = options.table
     for name in options.tasklist then table.enqueue(name)
@@ -118,6 +115,7 @@ run = (options) ->
   .fail (error) ->
     logging.error error.message
     logging.info error.stack
+    process.exit 1
 
 main = ->
   options = nopt(longOptions, shortOptions)
@@ -132,6 +130,9 @@ main = ->
     process.exit 0
   if options.help
     console.log(HELP)
+
+  # voodoo that might make Q faster
+  if not options.debug then Q.longStackJumpLimit = 0
   run(options)
 
 

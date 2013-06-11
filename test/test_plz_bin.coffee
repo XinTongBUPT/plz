@@ -244,7 +244,7 @@ task "build", run: (wut) ->
 """
 
 LOAD_TEST = """
-plugin "whine"
+load "whine"
 
 task "build", run: ->
   console.log "loaded."
@@ -268,8 +268,8 @@ plugins.whine = ->
 """
 
 LOAD_TEST_2 = """
-plugin "smile"
-plugin "whine"
+load "smile"
+load "whine"
 
 task "build", run: ->
   console.log "loaded."
