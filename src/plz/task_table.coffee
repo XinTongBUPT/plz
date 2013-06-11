@@ -1,7 +1,9 @@
 globwatcher = require 'globwatcher'
-logging = require "./logging"
 Q = require 'q'
 util = require 'util'
+
+logging = require("./logging")
+Task = require("./task").Task
 
 # how long to wait to run a job after it is triggered (msec)
 QUEUE_DELAY = 100
@@ -30,6 +32,8 @@ class TaskTable
         (missing[task.before] or= []).push name
       if task.after? and (not @tasks[task.after]?)
         (missing[task.after] or= []).push name
+      if task.attach? and (not @tasks[task.attach]?)
+        @addTask new Task(task.attach)
       if task.must? then for t in task.must then if not @tasks[t]?
         (missing[t] or= []).push name
     if Object.keys(missing).length > 0
@@ -42,8 +46,8 @@ class TaskTable
       task = @tasks[name]
       for dep in (task.must or []).sort()
         t = @tasks[dep]
-        if t.before? or t.after?
-          target = t.before or t.after
+        if t.before? or t.after? or t.attach?
+          target = t.before or t.after or t.attach?
           throw new Error("Task #{name} can't require #{dep} because #{dep} is a decorator for #{target}")
 
   # look for cycles.
@@ -56,7 +60,7 @@ class TaskTable
       task = @tasks[name]
       if not path? then path = [ name ]
       seen[name] = path
-      for t in (task.must or []).concat(task.before or [], task.after or []).sort()
+      for t in (task.must or []).concat(task.before or [], task.after or [], task.attach or []).sort()
         if seen[t]?
           throw new Error("Dependency loop: #{path.concat(t).join(' -> ')}")
         walk(t, copy(seen), path.concat(t))
@@ -79,6 +83,7 @@ class TaskTable
         delete @tasks[name]
     for name in @getNames() then process(@tasks[name], "before")
     for name in @getNames() then process(@tasks[name], "after")
+    for name in @getNames() then process(@tasks[name], "attach")
 
   # turn on all the watches.
   # options: { persistent, debounceInterval, interval }

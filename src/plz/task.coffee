@@ -9,6 +9,7 @@ TASK_REGEX = /^[a-z][-a-z0-9_]*$/
 #   description: "displayed in help"
 #   before: "task"  # run immediately before another task, when that task is run
 #   after: "task"   # run immediately after another task, when that task is run
+#   attach: "task"  # run immediately after another task, or if that task doesn't exist, replace it
 #   must: [ "task", "task" ]  # run these dependent tasks first, always
 #   watch: [ "file-glob" ]    # run this task when any of these files change
 #   run: (options) -> ...     # code to run when executing
@@ -28,11 +29,12 @@ class Task
     if typeof @must == "string" then @must = [ @must ]
     @before = options.before?.toString()
     @after = options.after?.toString()
+    @attach = options.attach?.toString()
     @watch = options.watch
     if typeof @watch == "string" then @watch = [ @watch ]
     # quick sanity checks
-    if @before? and @after?
-      throw new Error("Task can be before or after another task, but not both!")
+    if (@before? and @after?) or (@before? and @attach?) or (@after? and @attach?)
+      throw new Error("Task can be only be one of: before, after, attach")
     # list all tasks "covered" by this one, in case of consolidation.
     @covered = [ @name ]
 

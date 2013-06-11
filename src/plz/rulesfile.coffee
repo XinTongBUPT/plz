@@ -4,6 +4,7 @@ Q = require 'q'
 util = require 'util'
 
 context = require("./context")
+defaults = require("./defaults")
 Config = require("./config").Config
 logging = require("./logging")
 plugins = require("./plugins")
@@ -57,6 +58,7 @@ compileRulesFile = (settings) ->
 compile = (data, settings={}) ->
   table = new TaskTable()
   sandbox = context.makeContext(Config.rulesFile(), table)
+  plugins.eval$(defaults.defaults, sandbox: sandbox, filename: "<defaults>")
   plugins.eval$(data, sandbox: sandbox, filename: Config.rulesFile())
   table
 

@@ -24,7 +24,7 @@ describe "Task", ->
     (-> new task.Task("a=b")).should.throw(/must be letters/)
 
   it "won't let you have a before and after", ->
-    (-> new task.Task("name", before: "x", after: "y")).should.throw(/not both/)
+    (-> new task.Task("name", before: "x", after: "y")).should.throw(/only be one of/)
 
   it "combines two tasks", futureTest ->
     t1 = new task.Task "first",
@@ -47,3 +47,4 @@ describe "Task", ->
     options = { x: 9 }
     t3.run(options).then ->
       options.should.eql(x: 10, z: 10)
+    
