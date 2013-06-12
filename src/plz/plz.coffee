@@ -175,3 +175,4 @@ options:
 exports.main = main
 exports.run = run
 exports.parseTaskList = parseTaskList
+exports.readRcFile = readRcFile

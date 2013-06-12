@@ -35,3 +35,35 @@ describe "plz", ->
     [ tasklist, settings ] = parse([ ])
     tasklist.should.eql [ "build" ]
     settings.should.eql({})
+
+  describe "readRcFile", ->
+    it "trims", futureTest withTempFolder (folder) ->
+      fs.writeFileSync "#{folder}/plzrc", PLZRC_1
+      process.env["PLZRC"] = "#{folder}/plzrc"
+      plz.readRcFile({}).then (settings) ->
+        settings.should.eql(hello: "alpha")
+      .fin ->
+        delete process.env["PLZRC"]
+
+    it "ignores comments and blank lines", futureTest withTempFolder (folder) ->
+      fs.writeFileSync "#{folder}/plzrc", PLZRC_2
+      process.env["PLZRC"] = "#{folder}/plzrc"
+      plz.readRcFile({}).then (settings) ->
+        settings.should.eql(hello: "alpha", truck: "car")
+      .fin ->
+        delete process.env["PLZRC"]
+
+
+PLZRC_1 = """
+  hello=alpha
+"""
+
+PLZRC_2 = """
+# test .plzrc
+hello=alpha
+
+# comment
+truck=car
+
+# more comments
+"""
