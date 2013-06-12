@@ -166,6 +166,13 @@ describe "bin/plz", ->
       execFuture("#{binplz} -f rules").then (p) ->
         p.stdout.should.match(/whine.\nloaded.\n/)
 
+  it "loads PLZ_RULES if asked", futureTest withTempFolder (folder) ->
+    fs.writeFileSync "#{folder}/rules.x", 'task "hello", run: -> notice "hello"\n'
+    env = { "PLZ_RULES": "#{folder}/rules.x" }
+    for k, v of process.env then env[k] = v
+    execFuture("#{binplz} hello", env: env).then (p) ->
+      p.stdout.should.match(/hello\n/)
+
 
 SHELL_TEST = """
 task "wiggle", run: ->

@@ -31,6 +31,9 @@ findRulesFile = (options={}) ->
     if options.filename[0] != "/" then options.filename = path.join(Config.cwd(), options.filename)
     Config.rulesFile(options.filename)
     return
+  if process.env["PLZ_RULES"]?
+    Config.rulesFile(process.env["PLZ_RULES"])
+    return
   parent = path.dirname(Config.cwd())
   while true
     filename = path.join(Config.cwd(), DEFAULT_FILENAME)
