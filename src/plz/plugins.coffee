@@ -22,7 +22,7 @@ load = (name) ->
 findPlugin = (name) ->
   home = process.env["HOME"] or process.env["USERPROFILE"]
   pluginPath = [ "#{home}/.plz/plugins", "#{process.cwd()}/.plz/plugins" ]
-  if process.env["PLZPATH"]? then pluginPath.push process.env["PLZPATH"]
+  if process.env["PLZ_PATH"]? then pluginPath.push process.env["PLZ_PATH"]
   pluginPath = pluginPath.map (folder) -> path.resolve(folder)
 
   for p in pluginPath

@@ -131,7 +131,7 @@ describe "bin/plz", ->
       shell.mkdir "-p", "#{folder}/hidden"
       fs.writeFileSync "#{folder}/hidden/plz-whine.coffee", LOAD_TEST_WHINE
       fs.writeFileSync "#{folder}/rules", LOAD_TEST
-      env = { "PLZPATH": "#{folder}/hidden" }
+      env = { "PLZ_PATH": "#{folder}/hidden" }
       for k, v of process.env then env[k] = v
       execFuture("#{binplz} -f rules", env: env).then (p) ->
         p.stdout.should.match(/whine.\nloaded.\n/)
