@@ -8,24 +8,34 @@ logging = require("./logging")
 
 plugins = {}
 
-# try to load a plugin, first by searching plugin_path, and then by node's usual mechanism.
+# load a plugin, or die trying.
 load = (name) ->
   if plugins[name]? then return plugins[name]()
+  filename = findPlugin(name)
+  if not filename? then throw new Error("Can't find plugin: #{name}")
+  logging.debug "Loading plugin: #{filename}"
+  eval$(fs.readFileSync(filename), filename: filename)
+  # plugin could be indirect
+  if plugins[name]? then plugins[name]()
 
+# search for a plugin, first in plz-specific locations, then in node locations.
+findPlugin = (name) ->
   home = process.env["HOME"] or process.env["USERPROFILE"]
   pluginPath = [ "#{home}/.plz/plugins", "#{process.cwd()}/.plz/plugins" ]
   if process.env["PLZPATH"]? then pluginPath.push process.env["PLZPATH"]
   pluginPath = pluginPath.map (folder) -> path.resolve(folder)
 
   for p in pluginPath
-    for filename in [ "#{p}/plz-#{name}.js", "#{p}/plz-#{name}.coffee" ]
-      if fs.existsSync(filename)
-        logging.debug "Loading plugin: #{filename}"
-        eval$(fs.readFileSync(filename), filename: filename)
-        # plugin could be indirect
-        if plugins[name]? then plugins[name]()
-        return
-  throw new Error("Can't find plugin: #{name}")
+    for ext in [ "coffee", "js" ]
+      for filename in [ "#{p}/plz-#{name}.#{ext}", "#{p}/plz-#{name}/index.#{ext}" ]
+        if fs.existsSync(filename) then return filename
+
+  # hm, try node.
+  try
+    # do not look too closely at this line.
+    return contextStack[0].require.resolve("plz-#{name}")
+  catch e
+    return null
 
 # gibberish copied over from coffee-script.
 createContext = (filename, globals) ->

@@ -143,6 +143,15 @@ describe "bin/plz", ->
       execFuture("#{binplz} -f rules").then (p) ->
         p.stdout.should.match(/whine.\nloaded.\n/)
 
+    it "from a node module", futureTest withTempFolder (folder) ->
+      shell.mkdir "-p", "#{folder}/node_modules/plz-whine"
+      fs.writeFileSync "#{folder}/node_modules/plz-whine/index.js", LOAD_TEST_WHINE_JS
+      fs.writeFileSync "#{folder}/rules", LOAD_TEST
+      env = { "NODE_PATH": "#{folder}/node_modules" }
+      for k, v of process.env then env[k] = v
+      execFuture("#{binplz} -f rules").then (p) ->
+        p.stdout.should.match(/whine.\nloaded.\n/)
+
     it "delayed from within a file", futureTest withTempFolder (folder) ->
       shell.mkdir "-p", "#{folder}/.plz/plugins"
       fs.writeFileSync "#{folder}/.plz/plugins/plz-whine.coffee", LOAD_TEST_DELAYED
@@ -253,6 +262,12 @@ task "build", run: ->
 LOAD_TEST_WHINE = """
 task "prebuild", before: "build", run: ->
   console.log "whine."
+"""
+
+LOAD_TEST_WHINE_JS = """
+task("prebuild", { before: "build", run: function() {
+  console.log("whine.");
+}})
 """
 
 LOAD_TEST_DELAYED = """
