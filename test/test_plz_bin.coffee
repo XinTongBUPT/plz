@@ -47,6 +47,15 @@ describe "bin/plz", ->
     .then (p) ->
       p.stdout.should.match(/\n\[\d\d\.\d\d\d\] Defining task: xyzzy/)
 
+  it "can be made verbose via .plzrc", futureTest withTempFolder (folder) ->
+    fs.writeFileSync "#{folder}/rules", 'task "build", run: -> info "hello!"\n'
+    fs.writeFileSync "#{folder}/plzrc", "options=--verbose\n"
+    env = { "PLZRC": "#{folder}/plzrc" }
+    for k, v of process.env then env[k] = v
+    execFuture("#{binplz} -f rules", env: env)
+    .then (p) ->
+      p.stdout.should.match(/hello!\n/)
+
   it "can do basic shell commands", futureTest withTempFolder (folder) ->
     fs.writeFileSync "#{folder}/rules", SHELL_TEST
     execFuture("#{binplz} -f rules wiggle")

@@ -14,7 +14,7 @@ DEFAULT_FILENAME = "build.plz"
 
 # scan the path for a rules file and compile it. returns a Future[TaskTable]
 # if successful.
-loadRules = (options) ->
+loadRules = (options, settings={}) ->
   try
     findRulesFile(options)
   catch error
@@ -23,7 +23,7 @@ loadRules = (options) ->
       process.exit 0
     logging.error "#{error.message}"
     process.exit 1
-  compileRulesFile().fail ->
+  compileRulesFile(settings).fail ->
     process.exit 1
 
 findRulesFile = (options={}) ->
@@ -60,6 +60,7 @@ compileRulesFile = (settings) ->
 
 compile = (data, settings={}) ->
   table = new TaskTable()
+  table.settings = settings
   sandbox = context.makeContext(Config.rulesFile(), table)
   plugins.eval$(defaults.defaults, sandbox: sandbox, filename: "<defaults>")
   plugins.eval$(data, sandbox: sandbox, filename: Config.rulesFile())

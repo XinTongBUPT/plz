@@ -35,18 +35,74 @@ shortOptions =
   v: [ "--verbose" ]
   D: [ "--debug" ]
 
-parseTaskList = (options, settings={}) ->
-  tasklist = []
-  for word in options.argv.remain
-    if word.match task.TASK_REGEX
-      tasklist.push word
-    else if (m = word.match SETTING_RE)
-      settings[m[1]] = m[2]
+main = ->
+  settings = {}
+  readRcFile(settings)
+  .then (settings) ->
+    # allow settings.options to take effect, then allow argv to override them.
+    if settings.options? then parseOptions(settings.options.split(" "), 0)
+    options = parseOptions(process.argv)
+    # voodoo that might make Q faster
+    if not options.debug then Q.longStackJumpLimit = 0
+    run(options, settings)
+  .fail (error) ->
+    logging.error error.message
+    logging.info error.stack
+    process.exit 1
+
+parseOptions = (argv, slice) ->
+  options = nopt(longOptions, shortOptions, argv, slice)
+  if options.colors then logging.useColors(true)
+  if options["no-colors"] then logging.useColors(false)
+  if options.verbose then logging.setVerbose(true)
+  if options.debug then logging.setDebug(true)
+  if options.folder then process.chdir(options.folder)
+  if options.version
+    console.log "plz #{Config.version()}"
+    process.exit 0
+  if options.help
+    console.log(HELP)
+  options
+
+displayHelp = (table) ->
+  taskNames = table.getNames()
+  width = taskNames.map((x) -> x.length).reduce((a, b) -> Math.max(a, b))
+  console.log "Known tasks:"
+  for t in taskNames
+    console.log sprintf.sprintf("  %#{width}s - %s", t, table.getTask(t).description)
+  console.log ""
+  process.exit 0
+
+run = (options, settings) ->
+  startTime = Date.now()
+  rulesfile.loadRules(options, settings).then (table) ->
+    runWithTable(options, settings, table, startTime)
+
+runWithTable = (options, settings, table, startTime) ->
+  table.validate()
+  table.consolidate()
+  if options.help or options.tasks then displayHelp(table)
+  options.table = table
+  parseTaskList(options, settings)
+  logging.debug "Settings: #{util.inspect(settings)}"
+  for name in options.tasklist
+    if not table.getTask(name)? then throw new Error("No task named '#{name}'")
+  table.activate(persistent: options.run, interval: 250)
+  .then ->
+    for name in options.tasklist then table.enqueue(name)
+    table.runQueue()
+  .then ->
+    if options.run
+      logging.taskinfo "Watching for changes..."
     else
-      throw new Error("I don't know what to do with '#{word}'")
-  if tasklist.length == 0 then tasklist.push DEFAULT_TASK
-  options.tasklist = tasklist
-  [ tasklist, settings ]
+      duration = Date.now() - startTime
+      if duration <= 2000
+        humanTime = "#{duration} milliseconds"
+      else if duration <= 120000
+        humanTime = sprintf.sprintf("%.1f seconds", duration / 1000.0)
+      else
+        humanTime = "#{Math.floor(duration / 60000.0)} minutes"
+      logging.notice "Finished in #{humanTime}."
 
 readRcFile = (settings) ->
   filename = if process.env["PLZRC"]?
@@ -71,69 +127,18 @@ readRcFile = (settings) ->
   else
     Q(settings)
 
-displayHelp = (table) ->
-  taskNames = table.getNames()
-  width = taskNames.map((x) -> x.length).reduce((a, b) -> Math.max(a, b))
-  console.log "Known tasks:"
-  for t in taskNames
-    console.log sprintf.sprintf("  %#{width}s - %s", t, table.getTask(t).description)
-  console.log ""
-  process.exit 0
-
-run = (options) ->
-  startTime = Date.now()
-  rulesfile.loadRules(options)
-  .then (table) ->
-    table.validate()
-    table.consolidate()
-    if options.help or options.tasks then displayHelp(table)
-    options.table = table
-    readRcFile(table.settings)
-  .then (settings) ->
-    table = options.table
-    parseTaskList(options, settings)
-    logging.debug "Settings: #{util.inspect(settings)}"
-    for name in options.tasklist
-      if not table.getTask(name)? then throw new Error("No task named '#{name}'")
-    table.activate(persistent: options.run, interval: 250)
-  .then ->
-    table = options.table
-    for name in options.tasklist then table.enqueue(name)
-    table.runQueue()
-  .then ->
-    if options.run
-      logging.taskinfo "Watching for changes..."
+parseTaskList = (options, settings={}) ->
+  tasklist = []
+  for word in options.argv.remain
+    if word.match task.TASK_REGEX
+      tasklist.push word
+    else if (m = word.match SETTING_RE)
+      settings[m[1]] = m[2]
     else
-      duration = Date.now() - startTime
-      if duration <= 2000
-        humanTime = "#{duration} milliseconds"
-      else if duration <= 120000
-        humanTime = sprintf.sprintf("%.1f seconds", duration / 1000.0)
-      else
-        humanTime = "#{Math.floor(duration / 60000.0)} minutes"
-      logging.notice "Finished in #{humanTime}."
-  .fail (error) ->
-    logging.error error.message
-    logging.info error.stack
-    process.exit 1
-
-main = ->
-  options = nopt(longOptions, shortOptions)
-
-  if options.colors then logging.useColors(true)
-  if options["no-colors"] then logging.useColors(false)
-  if options.verbose then logging.setVerbose(true)
-  if options.debug then logging.setDebug(true)
-  if options.folder then process.chdir(options.folder)
-  if options.version
-    console.log "plz #{Config.version()}"
-    process.exit 0
-  if options.help
-    console.log(HELP)
-
-  # voodoo that might make Q faster
-  if not options.debug then Q.longStackJumpLimit = 0
-  run(options)
+      throw new Error("I don't know what to do with '#{word}'")
+  if tasklist.length == 0 then tasklist.push DEFAULT_TASK
+  options.tasklist = tasklist
+  [ tasklist, settings ]
 
 
 HELP = """
