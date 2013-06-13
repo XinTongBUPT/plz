@@ -3,6 +3,7 @@
 #
 
 child_process = require 'child_process'
+path = require 'path'
 Q = require 'q'
 shell = require 'shelljs'
 touch = require 'touch'
@@ -88,6 +89,11 @@ makeContext = (filename, table) ->
     table.enqueue(name, args)
 
   globals.settings = table.settings
+
+  # stub in a "project" object for plugins to play with.
+  globals.project =
+    name: path.basename(process.cwd())
+    type: "basic"
 
   plugins.createContext(filename, globals)
 
