@@ -68,7 +68,5 @@ task 'name', description: "do something", run: ->
   (folder layout, like "node") and "name" (name of the folder), for use by
   plugins.
 
-# unfinished stories
-
 - settings can be namespaced in js: "mocha.grep".
 
