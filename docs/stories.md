@@ -53,18 +53,22 @@ task 'name', description: "do something", run: ->
 
 - javascript should be okay (just detect a lack of "->").
 
-- plugins can be loaded via a "plugin" function that searches PLZPATH.
-
-- any command-line options can be passed in a .plzrc also (PLZRC).
-
-
-# unfinished stories
+- plugins can be loaded via a "plugin" function that searches PLZ_PATH.
 
 - plugins can add features to the global context (like 'mocha' or 'coffee').
+
+- plugins can be loaded from node modules.
+
+- a "base rules" file can be loaded by naming it in an env var ("PLZ_RULES").
+
+- these command-line options can be passed in a .plzrc also (PLZRC): colors,
+  verbose/debug -- via "options".
 
 - a global "project" object can be used to determine at minimum the "type"
   (folder layout, like "node") and "name" (name of the folder), for use by
   plugins.
 
-- a "base rules" file can be loaded by naming it in an env var ("PLZRULES"?).
+# unfinished stories
+
+- settings can be namespaced in js: "mocha.grep".
 
