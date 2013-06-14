@@ -135,6 +135,11 @@ describe "bin/plz", ->
       execFuture("#{binplz} -f rules citrus=\'hello there\'").then (p) ->
         p.stdout.should.match(/^hello there\n/)
 
+    it "nested", futureTest withTempFolder (folder) ->
+      fs.writeFileSync "#{folder}/rules", SETTINGS_TEST_3
+      execFuture("#{binplz} -f rules names.commie=brown eaters.grass=cow").then (p) ->
+        p.stdout.should.match(/^brown cow\n/)
+
   describe "can load modules", ->
     it "from PLZPATH", futureTest withTempFolder (folder) ->
       shell.mkdir "-p", "#{folder}/hidden"
@@ -267,6 +272,13 @@ SETTINGS_TEST_2 = """
 task "build", run: (wut) ->
   console.log wut.citrus
 """
+
+SETTINGS_TEST_3 = '''
+settings.names = { spooky: "black", commie: "gray" }
+
+task "build", run: ->
+  console.log "#{settings.names.commie} #{settings.eaters.grass}"
+'''
 
 LOAD_TEST = """
 load "whine"

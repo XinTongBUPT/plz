@@ -14,7 +14,7 @@ task = require("./task")
 task_table = require("./task_table")
 
 DEFAULT_TASK = "build"
-SETTING_RE = /^(\w[-\w]*)=(.*)$/
+SETTING_RE = /^(\w[-\.\w]*)=(.*)$/
 
 longOptions =
   filename: [ path, null ]
@@ -133,7 +133,11 @@ parseTaskList = (options, settings={}) ->
     if word.match task.TASK_REGEX
       tasklist.push word
     else if (m = word.match SETTING_RE)
-      settings[m[1]] = m[2]
+      segments = m[1].split(".")
+      obj = settings
+      for segment in segments[0...-1]
+        obj = (obj[segment] or= {})
+      obj[segments[segments.length - 1]] = m[2]
     else
       throw new Error("I don't know what to do with '#{word}'")
   if tasklist.length == 0 then tasklist.push DEFAULT_TASK
