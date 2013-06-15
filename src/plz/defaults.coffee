@@ -15,7 +15,7 @@ extend settings,
 plugins.coffee = ->
   settings.mocha.options.push "--compilers coffee:coffee-script"
 
-  task "build-coffee", attach: "build", run: ->
+  task "build-coffee", attach: "build", description: "compile coffee-script source", run: ->
     mkdir "-p", settings.coffee.lib
     exec "#{settings.coffee.bin} -o #{settings.coffee.lib} -c #{settings.coffee.src} #{settings.coffee.options.join(' ')}"
 
@@ -30,7 +30,7 @@ extend settings,
     options: [ "--colors" ]
 
 plugins.mocha = ->
-  task "test-mocha", attach: "test", run: ->
+  task "test-mocha", attach: "test", description: "run unit tests", run: ->
     if settings.mocha.grep? then settings.mocha.options.push "--grep #{settings.mocha.grep}"
     exec "#{settings.mocha.bin} -R #{settings.mocha.display} #{settings.mocha.options.join(' ')}"
 
