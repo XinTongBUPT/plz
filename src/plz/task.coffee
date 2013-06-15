@@ -48,6 +48,7 @@ class Task
   # meaningfully merged are pulled from 'primaryTask'.
   combine: (task, primaryTask) ->
     t = new Task(primaryTask.name, description: primaryTask.description)
+    if t.description == "(unknown)" then t.description = task.description
     if @watch? or task.watch?
       t.watch = (@watch or []).concat(task.watch or [])
     if @must? or task.must?
