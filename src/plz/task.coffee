@@ -12,6 +12,7 @@ TASK_REGEX = /^[a-z][-a-z0-9_]*$/
 #   attach: "task"  # run immediately after another task, or if that task doesn't exist, replace it
 #   must: [ "task", "task" ]  # run these dependent tasks first, always
 #   watch: [ "file-glob" ]    # run this task when any of these files change
+#   watchall: [ "file-glob" ] # run this task when any of these files change or are deleted
 #   run: (options) -> ...     # code to run when executing
 
 class Task
@@ -32,6 +33,8 @@ class Task
     @attach = options.attach?.toString()
     @watch = options.watch
     if typeof @watch == "string" then @watch = [ @watch ]
+    @watchall = options.watchall
+    if typeof @watchall == "string" then @watchall = [ @watchall ]
     # quick sanity checks
     if (@before? and @after?) or (@before? and @attach?) or (@after? and @attach?)
       throw new Error("Task can be only be one of: before, after, attach")

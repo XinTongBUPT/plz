@@ -57,6 +57,7 @@ defaultGlobals =
   console: console
   process: process
   Buffer: Buffer
+  Q: Q
   # logging:
   debug: logging.debug
   info: logging.info

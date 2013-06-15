@@ -92,24 +92,33 @@ class TaskTable
     promises = []
     for name in @getNames() then do (name) =>
       task = @getTask(name)
+      task.watchers = []
       if task.watch?
-        watcher = globwatcher.globwatcher(task.watch, options)
-        handler = =>
-          if @enqueue(name)
-            logging.taskinfo "--- File change triggered: #{name}"
-            @runQueue()
-        watcher.on "added", handler
-        watcher.on "deleted", handler
-        watcher.on "changed", handler
+        watcher = @activateWatch(task.watch, options, name, false)
         promises.push watcher.ready
-        task.watcher = watcher
+        task.watchers.push watcher
+      if task.watchall?
+        watcher = @activateWatch(task.watchall, options, name, true)
+        promises.push watcher.ready
+        task.watchers.push watcher
     Q.all(promises)
+
+  activateWatch: (watch, options, name, alsoDeletes) ->
+    watcher = globwatcher.globwatcher(watch, options)
+    handler = =>
+      if @enqueue(name)
+        logging.taskinfo "--- File change triggered: #{name}"
+        @runQueue()
+    watcher.on "added", handler
+    watcher.on "changed", handler
+    if alsoDeletes then watcher.on "deleted", handler
+    watcher
 
   # turn off all watches
   close: ->
     for name in @getNames()
       task = @getTask(name)
-      if task.watcher? then task.watcher.close()
+      if task.watchers? then task.watchers.map (w) -> w.close()
 
   # queue a task (by name). doesn't actually run the queue.
   enqueue: (name) ->
@@ -158,7 +167,7 @@ class TaskTable
     Q.all(
       for name in @getNames()
         task = @getTask(name)
-        if task.watcher? then task.watcher.check() else Q(null)
+        if task.watchers? then Q.all(task.watchers.map((w) -> w.check())) else Q(null)
     )
 
   # flush the queued tasks (and their dependencies) into a given task list.

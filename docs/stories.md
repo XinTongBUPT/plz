@@ -70,3 +70,4 @@ task 'name', description: "do something", run: ->
 
 - settings can be namespaced in js: "mocha.grep".
 
+- "watch" watches for add/modify; "watchall" watches deletes too.

@@ -20,7 +20,7 @@ binplz = "#{process.cwd()}/bin/plz"
 # effectively integration tests.
 # verify the behavior of 'bin/plz'.
 #
-describe "bin/plz", ->
+describe "plz (system binary)", ->
   it "responds to --help", futureTest ->
     execFuture("#{binplz} --help").then (p) ->
       p.stderr.toString().should.eql("")
@@ -105,6 +105,33 @@ describe "bin/plz", ->
     f2 = Q.delay(500).then ->
       fs.writeFileSync "#{folder}/die.x", "die!"
     Q.all([ f1, f2 ])
+
+  describe "watches files", ->
+    it "for adds & changes", futureTest withTempFolder (folder) ->
+      shell.mkdir "-p", "#{folder}/stuff"
+      fs.writeFileSync "#{folder}/rules", RUN_TEST_2.replace(/%STUFF%/g, "#{folder}/stuff").replace(/%FOLDER%/g, "#{folder}")
+      fs.writeFileSync "#{folder}/stuff/exists.x", "exists"
+      f1 = execFuture("#{binplz} -r -f rules").then (p) ->
+        p.stdout.should.match(/hi.\nnormal watch\nnormal watch\n/)
+      f2 = Q.delay(250).then ->
+        fs.writeFileSync "#{folder}/stuff/new.x", "new"
+        Q.delay(250).then ->
+          fs.writeFileSync "#{folder}/stuff/exists.x", "different!"
+      f3 = Q.delay(1000).then ->
+        fs.writeFileSync "#{folder}/die.x", "die!"
+      Q.all([ f1, f2, f3 ])
+
+    it "for deletes too", futureTest withTempFolder (folder) ->
+      shell.mkdir "-p", "#{folder}/stuff"
+      fs.writeFileSync "#{folder}/rules", RUN_TEST_3.replace(/%STUFF%/g, "#{folder}/stuff").replace(/%FOLDER%/g, "#{folder}")
+      fs.writeFileSync "#{folder}/stuff/exists.x", "exists"
+      f1 = execFuture("#{binplz} -r -f rules").then (p) ->
+        p.stdout.should.match(/hi.\nall watch\n/)
+      f2 = Q.delay(250).then ->
+        fs.unlinkSync "#{folder}/stuff/exists.x"
+      f3 = Q.delay(1000).then ->
+        fs.writeFileSync "#{folder}/die.x", "die!"
+      Q.all([ f1, f2, f3 ])
 
   it "can get and set configs", futureTest withTempFolder (folder) ->
     fs.writeFileSync "#{folder}/rules", CONFIG_TEST
@@ -242,6 +269,29 @@ task "end", watch: "%FOLDER%/die.x", run: ->
   echo "goodbye"
   process.exit 0
 
+"""
+
+RUN_TEST_2 = """
+task "build", run: -> notice "hi."
+
+task "watch", watch: "%STUFF%/*", run: ->
+  notice "normal watch"
+
+task "end", watch: "%FOLDER%/die.x", run: ->
+  process.exit 0
+"""
+
+RUN_TEST_3 = """
+task "build", run: -> notice "hi."
+
+task "watch", watch: "%STUFF%/*", run: ->
+  notice "normal watch"
+
+task "watchall", watchall: "%STUFF%/*", run: ->
+  notice "all watch"
+
+task "end", watch: "%FOLDER%/die.x", run: ->
+  process.exit 0
 """
 
 CONFIG_TEST = """
