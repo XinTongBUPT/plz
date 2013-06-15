@@ -19,7 +19,7 @@ SETTING_RE = /^(\w[-\.\w]*)=(.*)$/
 longOptions =
   filename: [ path, null ]
   folder: [ path, null ]
-  run: Boolean
+  watch: Boolean
   version: Boolean
   help: Boolean
   tasks: Boolean
@@ -30,7 +30,7 @@ longOptions =
 
 shortOptions =
   f: [ "--filename" ]
-  r: [ "--run" ]
+  w: [ "--watch" ]
   F: [ "--folder" ]
   v: [ "--verbose" ]
   D: [ "--debug" ]
@@ -87,12 +87,12 @@ runWithTable = (options, settings, table, startTime) ->
   logging.debug "Settings: #{util.inspect(settings)}"
   for name in options.tasklist
     if not table.getTask(name)? then throw new Error("No task named '#{name}'")
-  table.activate(persistent: options.run, interval: 250)
+  table.activate(persistent: options.watch, interval: 250)
   .then ->
     for name in options.tasklist then table.enqueue(name)
     table.runQueue()
   .then ->
-    if options.run
+    if options.watch
       logging.taskinfo "Watching for changes..."
     else
       duration = Date.now() - startTime
@@ -147,25 +147,24 @@ parseTaskList = (options, settings={}) ->
 
 HELP = """
 plz #{Config.version()}
-usage: plz [options] (task-name [task-options])*
+usage: plz [options] [task-setting]* [task-name]*
 
-general options are listed below. task-options are all of the form
+general options are listed below. task-settings are all of the form
 "<name>=<value>".
 
 example:
-  plz -f #{Config.rulesFile()} build debug=true run
+  plz -f #{rulesfile.DEFAULT_FILENAME} build debug=true run
 
-  loads rules from #{Config.rulesFile()}, then runs two tasks:
-    - "build", with options { debug: true }
-    - "run", with no options
+  loads rules from #{rulesfile.DEFAULT_FILENAME}, adds { debug: "true" } to the
+  global settings object, then runs task "build" followed by task "run".
 
 options:
   --filename FILENAME (-f)
       use a specific rules file (default: #{Config.rulesFile()})
   --tasks
       show the list of tasks and their descriptions
-  --run (-r)
-      stay running, monitoring files for changes
+  --watch (-w)
+      keep running (until killed), watching for changed files
   --folder FOLDER (-F)
       move into a folder before running
   --help

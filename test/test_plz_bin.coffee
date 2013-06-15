@@ -100,7 +100,7 @@ describe "plz (system binary)", ->
 
   it "runs without exiting, waiting for file changes", futureTest withTempFolder (folder) ->
     fs.writeFileSync "#{folder}/rules", RUN_TEST.replace("%FOLDER%", folder)
-    f1 = execFuture("#{binplz} -r -f rules main").then (p) ->
+    f1 = execFuture("#{binplz} -w -f rules main").then (p) ->
       p.stdout.should.match(/hello\ngoodbye\n/)
     f2 = Q.delay(500).then ->
       fs.writeFileSync "#{folder}/die.x", "die!"
@@ -111,7 +111,7 @@ describe "plz (system binary)", ->
       shell.mkdir "-p", "#{folder}/stuff"
       fs.writeFileSync "#{folder}/rules", RUN_TEST_2.replace(/%STUFF%/g, "#{folder}/stuff").replace(/%FOLDER%/g, "#{folder}")
       fs.writeFileSync "#{folder}/stuff/exists.x", "exists"
-      f1 = execFuture("#{binplz} -r -f rules").then (p) ->
+      f1 = execFuture("#{binplz} -w -f rules").then (p) ->
         p.stdout.should.match(/hi.\nnormal watch\nnormal watch\n/)
       f2 = Q.delay(250).then ->
         fs.writeFileSync "#{folder}/stuff/new.x", "new"
@@ -125,7 +125,7 @@ describe "plz (system binary)", ->
       shell.mkdir "-p", "#{folder}/stuff"
       fs.writeFileSync "#{folder}/rules", RUN_TEST_3.replace(/%STUFF%/g, "#{folder}/stuff").replace(/%FOLDER%/g, "#{folder}")
       fs.writeFileSync "#{folder}/stuff/exists.x", "exists"
-      f1 = execFuture("#{binplz} -r -f rules").then (p) ->
+      f1 = execFuture("#{binplz} -w -f rules").then (p) ->
         p.stdout.should.match(/hi.\nall watch\n/)
       f2 = Q.delay(250).then ->
         fs.unlinkSync "#{folder}/stuff/exists.x"
