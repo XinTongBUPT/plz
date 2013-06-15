@@ -135,7 +135,7 @@ The following globals are available to tasks:
     - sed
     - test
     - which
-- `exec(command, options): see below
+- `exec(command, options)`: see below
 - `touch(filename)` which is `touch.sync` from [node-touch](https://github.com/isaacs/node-touch)
 - node builtins and the Q promises library:
     - console
