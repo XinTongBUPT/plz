@@ -102,7 +102,7 @@ runWithTable = (options, settings, table, startTime) ->
         humanTime = sprintf.sprintf("%.1f seconds", duration / 1000.0)
       else
         humanTime = "#{Math.floor(duration / 60000.0)} minutes"
-      logging.notice "Finished in #{humanTime}."
+      logging.taskinfo "plz: finished in #{humanTime}."
 
 readRcFile = (settings) ->
   filename = if process.env["PLZRC"]?

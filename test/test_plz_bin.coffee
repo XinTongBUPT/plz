@@ -93,10 +93,10 @@ describe "plz (system binary)", ->
     fs.writeFileSync "#{folder}/rules", TOPO_TEST
     execFuture("#{binplz} -f rules pets")
     .then (p) ->
-      p.stdout.should.match(/bee\ncat\ndog\npets!\nFinished/)
+      p.stdout.should.eql "bee\ncat\ndog\npets!\n"
       execFuture("#{binplz} -f rules pets cat")
     .then (p) ->
-      p.stdout.should.match(/bee\ncat\ndog\npets!\nFinished/)
+      p.stdout.should.eql "bee\ncat\ndog\npets!\n"
 
   it "runs without exiting, waiting for file changes", futureTest withTempFolder (folder) ->
     fs.writeFileSync "#{folder}/rules", RUN_TEST.replace("%FOLDER%", folder)
