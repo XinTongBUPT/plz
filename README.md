@@ -113,6 +113,31 @@ The options are:
 - `before`/`after`/`attach`: combine this rule with another existing rule
 - `run`: the actual code to run for this task
 
+
+File watches
+------------
+
+A task can be executed automatically (or technically: enqueued to be executed)
+when file changes are detected. A watch list is a string or array of strings
+passed as the `watch` or `watchall` option to `task`. The strings are globs in
+the style of the `glob` and `globwatcher` modules, so wildcards like "*", "?",
+and "**" have their usual behavior.
+
+A `watch` is triggered whenever a file matching that glob is created or
+modified. Modified files are detected by size changes or "modification time"
+changes -- but be aware that some operating systems like OS X and Windows only
+track file modification times to the nearest second (or two seconds on
+Windows).
+
+A `watchall` is additionally triggered when any file matching that glob is
+deleted. Usually you don't want this mode, because if you have a "clean" task
+that deletes files, it may trigger build tasks, with unexpected (but
+hilarious) results.
+
+
+Globals
+-------
+
 The following globals are available to tasks:
 
 - `task(name, options)`: create a new task
@@ -146,7 +171,9 @@ The following globals are available to tasks:
 - `load(pluginName)`: see the section on plugins below
 - `plugins`: object that maps plugin names to functions -- see the section on plugins below
 
-### exec
+
+exec
+----
 
 The `exec` function in plz is a lightweight wrapper around node's `spawn`
 function.
@@ -174,13 +201,18 @@ exec "something".then ->
 Settings
 --------
 
-FIXME...
+A global `settings` object is available to tasks for configuration. Each field
+in this object is either a string, or a nested object (to allow for namespaced
+settings). They're loaded in this order:
 
+1. Any javascript/coffeescript global code in the rules file (or plugins or
+   loaded modules) will run first. Usually this is used to set default values.
 
-File watches
-------------
+2. If the file `$HOME/.plzrc` exists, or the environment variable `PLZRC` is
+   set, that file is loaded. It should contain `key=value` pairs, one per
+   line. Blank lines and comments (lines starting with "#") are allowed.
 
-FIXME...
+3. Finally, any `key=value` pairs on the command line will take effect.
 
 
 Before and after tasks
