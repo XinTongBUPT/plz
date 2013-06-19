@@ -73,10 +73,20 @@ displayHelp = (table) ->
   console.log ""
   process.exit 0
 
-run = (options, settings) ->
+run = (options, overlaySettings) ->
   startTime = Date.now()
+  settings = {}
   rulesfile.loadRules(options, settings).then (table) ->
+    recursiveMerge settings, overlaySettings
     runWithTable(options, settings, table, startTime)
+
+recursiveMerge = (obj1, obj2) ->
+  for k, v of obj2
+    if typeof v == "object"
+      obj1[k] or= {}
+      recursiveMerge(obj1[k], v)
+    else
+      obj1[k] = v
 
 runWithTable = (options, settings, table, startTime) ->
   table.validate()

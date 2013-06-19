@@ -167,6 +167,15 @@ describe "plz (system binary)", ->
       execFuture("#{binplz} -f rules names.commie=brown eaters.grass=cow").then (p) ->
         p.stdout.should.match(/^brown cow\n/)
 
+    it "following precedence", futureTest withTempFolder (folder) ->
+      # alpha: rules -> plzrc. beta: rules -> command-line. gamma: plzrc -> command-line.
+      fs.writeFileSync "#{folder}/rules", SETTINGS_TEST_4
+      fs.writeFileSync "#{folder}/plzrc", "alpha=rc\ngamma=rc\n"
+      env = { "PLZRC": "#{folder}/plzrc" }
+      for k, v of process.env then env[k] = v
+      execFuture("#{binplz} -f rules beta=cmd gamma=cmd", env: env).then (p) ->
+        p.stdout.should.match(/^alpha: rc\nbeta: cmd\ngamma: cmd\n$/)
+
   describe "can load modules", ->
     it "from PLZPATH", futureTest withTempFolder (folder) ->
       shell.mkdir "-p", "#{folder}/hidden"
@@ -328,6 +337,16 @@ settings.names = { spooky: "black", commie: "gray" }
 
 task "build", run: ->
   console.log "#{settings.names.commie} #{settings.eaters.grass}"
+'''
+
+SETTINGS_TEST_4 = '''
+settings.alpha = "global"
+settings.beta = "global"
+
+task "build", run: ->
+  notice "alpha: #{settings.alpha}"
+  notice "beta: #{settings.beta}"
+  notice "gamma: #{settings.gamma}"
 '''
 
 LOAD_TEST = """
