@@ -120,8 +120,8 @@ File watches
 A task can be executed automatically (or technically: enqueued to be executed)
 when file changes are detected. A watch list is a string or array of strings
 passed as the `watch` or `watchall` option to `task`. The strings are globs in
-the style of the `glob` and `globwatcher` modules, so wildcards like "*", "?",
-and "**" have their usual behavior.
+the style of the `glob` and `globwatcher` modules, so wildcards like `*`, `?`,
+and `**` have their usual behavior.
 
 A `watch` is triggered whenever a file matching that glob is created or
 modified. Modified files are detected by size changes or "modification time"
@@ -213,6 +213,9 @@ settings). They're loaded in this order:
    line. Blank lines and comments (lines starting with "#") are allowed.
 
 3. Finally, any `key=value` pairs on the command line will take effect.
+
+For `key=value` pairs, the key can be a dotted path like "mocha.display" to
+access the nested field "display" on the settings object "mocha".
 
 
 Before and after tasks
