@@ -63,22 +63,29 @@ $ plz test display=dot
 ```
 
 
-Execution
----------
+How it works
+------------
 
-For every task listed on the command line, plz looks up the recursive
-dependencies based on the `must` field of each task, and inserts them into the
-list so they're executed before that task. Each task is executed exactly once,
-and in the order listed (unless dependencies required it to be executed
-earlier).
+When you launch plz, it takes the list of tasks from the command line. If no
+tasks were listed, it will use a default task list that contains only "build".
 
-At the end of this cycle, if any file watches triggered tasks to be executed,
-plz will execute these new tasks following the same rules above. As long as
-file watches trigger during each cycle, plz will continue running tasks.
+For each task, plz looks up the dependencies from the `must` field, and sorts
+them (topologically) so that the deepest dependencies come first. Chains of
+dependencies are followed, but cycles aren't allowed. These are all then
+enqueued, uniquely, so that no task is enqueued twice.
 
-If a cycle completes without triggering any file watches, plz normally exits
-successfully. If it's running in `--watch` mode, it will sit blocked, waiting
-for files watches to trigger, until killed (usually by hitting control-C).
+Plz then runs each task in the queue, one at a time, in order, until there's
+an error or the queue is finished.
+
+When it's done running the queue, plz checks if any task's file watches were
+triggered. If so, those tasks (and their dependencies) are enqueued and it
+starts over again. This continues until the tasks in the queue can all be run
+without triggering any more file watches.
+
+Normally, plz will then exit.
+
+If it's running in `--watch` mode, plz will block instead, waiting for file
+watches to trigger, until killed (usually by hitting control-C).
 
 The `--verbose` (`-v`) option will make plz display the names of tasks as it
 executes them. `--debug` will make it dump more detailed debugging info about
@@ -110,13 +117,13 @@ The following globals are available to tasks:
 
 - `task(name, options)`: create a new task
 - `runTask(name)`: queue up a task to run
-- `settings`: global settings object (see settings section below)
+- `settings`: global settings object (see "settings" below)
 - `project`: object with project details:
     - `name`: name of the project (usually just the current folder name)
     - `type`: a string describing the project type, if a plugin has identified the project
 - shell commands from [shelljs](https://github.com/arturadib/shelljs):
     - cat, cd, chmod, cp, dirs, echo, env, exit, find, grep, ls, mkdir, mv, popd, pushd, pwd, rm, sed, test, which
-- `exec(command, options)`: see below
+- `exec(command, options)`: see "exec" below
 - `touch(filename)` which is `touch.sync` from [node-touch](https://github.com/isaacs/node-touch)
 - node builtins and the Q promises library:
     - console
@@ -124,11 +131,11 @@ The following globals are available to tasks:
     - Buffer
     - Q
 - logging functions, which take a string to log:
-    - debug (displayed with `--debug`)
-    - info (displayed with `--verbose`)
-    - notice
-    - warning
-    - error
+    - `debug(text)` (displayed with `--debug`)
+    - `info(text)` (displayed with `--verbose`)
+    - `notice(text)`
+    - `warning(text)`
+    - `error(text)`
 - `plz` object containing global state functions:
     - `useColors()`: get or set `--color`
     - `logVerbose()`: get or set `--verbose`
