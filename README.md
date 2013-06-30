@@ -14,7 +14,7 @@ make simple tasks trivial, and difficult tasks easier. Highlights:
   tasks, or they can be run automatically when a file changes, based on glob
   patterns.
 
-## Table of contents
+### Table of contents
 
 - [Install](#install)
 - [Example](#example)
