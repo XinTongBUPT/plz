@@ -88,10 +88,16 @@ How it works
 When you launch plz, it takes the list of tasks from the command line. If no
 tasks were listed, it will use a default task list that contains only "build".
 
-For each task, plz looks up the dependencies from the `must` field, and sorts
-them (topologically) so that the deepest dependencies come first. Chains of
-dependencies are followed, but cycles aren't allowed. These are all then
-enqueued, uniquely, so that no task is enqueued twice.
+If a rule file is specified on the command line (via `-f`), or via the
+environment variable `PLZ_RULES`, then the tasks are loaded from that file. If
+not, plz looks in the current folder for a "build.plz" file. If there's not
+one in the current folder, it looks in the parent folder, and so on up the
+tree.
+
+For each task you asked it to run, plz looks up the dependencies from the
+`must` field, and sorts them (topologically) so that the deepest dependencies
+come first. Chains of dependencies are followed, but cycles aren't allowed.
+These are all then enqueued, uniquely, so that no task is enqueued twice.
 
 Plz then runs each task in the queue, one at a time, in order, until there's
 an error or the queue is finished.
@@ -189,7 +195,7 @@ The following globals are available to tasks:
     - `cwd()`: get or set the current folder
     - `rulesFile()`: get or set the name of the plz rules file (usually "build.plz")
 - `load(pluginName)`: see the section on plugins below
-- `plugins`: object that maps plugin names to functions -- see the section on plugins below
+- `plugins`: object that maps plugin names to functions (see "plugins" below)
 
 
 exec
@@ -235,7 +241,18 @@ settings). They're loaded in this order:
 3. Finally, any `key=value` pairs on the command line will take effect.
 
 For `key=value` pairs, the key can be a dotted path like "mocha.display" to
-access the nested field "display" on the settings object "mocha".
+access the nested field "display" on the settings object "mocha". Plugins use
+dotted paths for namespacing.
+
+A "project" setting is created by default, with two properties:
+
+- `name`: the name of the project folder
+- `type`: "basic"
+
+Plz doesn't use this setting itself, but plugins may add more info, or change
+the type. For example, a coffeescript plugin might set the type to
+"coffeescript" to indicate to other plugins and tasks that this is primarily a
+coffeescript project.
 
 
 Before and after tasks
@@ -279,7 +296,58 @@ convenience for plugins to add code to common targets like "build" and "test".
 Plugins
 -------
 
-FIXME...
+Plugins are just code that can be loaded into your build rules to define new
+tasks or settings. Usually they add support for a specific language or tool.
+For example, to load support for mocha (a javascript test system):
+
+```coffeescript
+load "mocha"
+```
+
+The "load" function first looks in the global object "plugins" for a property
+with the name of the requested module. If it exists, it's called as a
+function. This lets a script define multiple plugins by adding functions to
+the "plugins" object, which delayes execution of the code until the plugin is
+explicitly loaded via "load".
+
+If there's no property in the "plugins" object, plz will try to load a
+javascript or coffeescript file with one of the following names (where `NAME`
+is the name passed to "load"):
+
+- `plz-NAME.js`
+- `plz-NAME.coffee`
+- `plz-NAME/index.js`
+- `plz-NAME/index.coffee`
+
+It searches these folders, in order:
+
+1. `$HOME/.plz/plugins/`
+2. `$PROJECT/.plz/plugins/` (the current project folder)
+3. `PLZ_PATH` if it's defined
+4. the normal node search path
+
+Plugins are executed in the same namespace as the build script, so they can
+modify globals. (This is unusual in coffeescript, but normal in javascript.)
+
+Here's an example plugin that adds mocha support:
+
+```coffeescript
+extend settings,
+  mocha:
+    bin: "./node_modules/mocha/bin/mocha"
+    display: "spec"
+    grep: null
+    options: [ "--colors" ]
+
+task "test-mocha", attach: "test", description: "run unit tests", run: ->
+  if settings.mocha.grep? then settings.mocha.options.push "--grep #{settings.mocha.grep}"
+  exec "#{settings.mocha.bin} -R #{settings.mocha.display} #{settings.mocha.options.join(' ')}"
+```
+
+It adds a few settings to the "mocha" namespace to allow overridding (for
+example, by passing "mocha.display=nyan" on the command line), and attaches
+some code to the "test" task so that mocha tests are run whenever "test" is
+executed.
 
 
 Manifesto
