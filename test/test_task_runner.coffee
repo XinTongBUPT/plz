@@ -106,7 +106,7 @@ describe "TaskRunner", ->
           fs.writeFileSync "#{folder}/out2.x", "now stop."
         else
           fs.writeFileSync "#{folder}/out.x", "first write!"
-      "setup": new Task "setup", watch: "#{folder}/out.x", run: ->
+      "setup": new Task "setup", run: ->
         completed.push "setup"
     runner.table.activate(persistent: false, interval: 250)
     .then ->
@@ -115,6 +115,33 @@ describe "TaskRunner", ->
       runner.runQueue()
     .then ->
       # 1. write out.x; 2. notice out.x, write out.x and out2.x; 3. notice out2.x and stop.
-      completed.should.eql [ "setup", "primary", "setup", "primary", "setup", "primary" ]
+      completed.should.eql [ "setup", "primary", "primary", "primary" ]
+      # great. but after a delay, it should both setup & primary again.
+      completed = []
+      Q.delay(100)
+    .then ->
+      fs.writeFileSync "#{folder}/out.x", "AGAIN! :) :) :) :) :)"
+      Q.delay(300)
+    .then ->
+      completed.should.eql [ "setup", "primary" ]
+      runner.queue.length.should.eql(0)
+      runner.table.close()
+
+  it "won't re-run a dependency task that it's already run", futureTest withTempFolder (folder) ->
+    completed = []
+    runner = new TaskTable().runner
+    runner.table.tasks =
+      "build": new Task "build", run: ->
+        completed.push "build"
+        fs.writeFileSync "#{folder}/out.x", "build!"
+      "test": new Task "setup", must: "build", watch: "#{folder}/out.x", run: ->
+        completed.push "test"
+    runner.table.activate(persistent: false, interval: 250)
+    .then ->
+      runner.enqueue "build"
+      completed.should.eql []
+      runner.runQueue()
+    .then ->
+      completed.should.eql [ "build", "test" ]
       runner.queue.length.should.eql(0)
       runner.table.close()

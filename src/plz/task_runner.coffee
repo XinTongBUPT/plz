@@ -32,10 +32,12 @@ class TaskRunner
     @flushQueue(tasklist, skip)
     logging.debug "Run tasks: #{tasklist.join(' ')}"
     @state = "running"
-    @runTasks(tasklist).then =>
+    @runTasks(tasklist).then (completed) =>
       again = (@state == "run-again") or (@queue.length > 0)
       @state = "waiting"
-      if again then @runQueue(skip)
+      if again
+        for name, v of completed then skip[name] = true
+        @runQueue(skip)
 
   # flush the queued tasks (and their dependencies) into a given task list.
   flushQueue: (tasklist = [], skip = {}) ->
@@ -49,19 +51,22 @@ class TaskRunner
     tasklist
 
   # loop through a tasklist, running one at a time, skipping dupes.
-  runTasks: (tasklist, skip = {}) ->
-    if tasklist.length == 0 then return Q(true)
+  runTasks: (tasklist, completed = {}) ->
+    if tasklist.length == 0 then return Q(completed)
     name = tasklist.shift()
-    (if skip[name]? then Q(null) else @runTask(name, skip)).then =>
-      # remove anything from the queue that's already in the current tasklist.
-      @queue = @queue.filter ([ name, args ]) ->
-        for [ n, a ] in tasklist then if name == n then return false
-        true
-      @runTasks(tasklist, skip)
+    if completed[name]?
+      @runTasks(tasklist, completed)
+    else
+      @runTask(name, completed).then =>
+        # remove anything from the queue that's already in the current tasklist.
+        @queue = @queue.filter ([ name, args ]) ->
+          for [ n, a ] in tasklist then if name == n then return false
+          true
+        @runTasks(tasklist, completed)
 
   # run one task, then check for watch triggers
-  runTask: (name, skip = {}) ->
-    skip[name] = true
+  runTask: (name, completed = {}) ->
+    completed[name] = true
     @table.getTask(name).run(@settings)
     .fail (error) ->
       error.message = "Task '#{name}' failed: #{error.message}"
