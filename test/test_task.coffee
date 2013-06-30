@@ -47,4 +47,14 @@ describe "Task", ->
     options = { x: 9 }
     t3.run(options).then ->
       options.should.eql(x: 10, z: 10)
-    
+  
+  it "adds a must to a task", ->
+    t1 = new task.Task "first",
+      description: "i'm first"
+      must: [ "oranges", "apples" ]
+      run: (options) -> options.x += 1
+    t2 = new task.Task "second",
+      description: "i'm second"
+      run: (options) -> options.z = options.x
+    t3 = t1.combine(t2, t2)
+    t3.must.should.eql [ "oranges", "apples" ]

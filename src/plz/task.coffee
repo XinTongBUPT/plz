@@ -53,7 +53,7 @@ class Task
       t.watch = (@watch or []).concat(task.watch or [])
     if @must? or task.must?
       t.must = (@must or [])
-      for m in task.must then if t.must.indexOf(m) < 0 then t.must.push(m)
+      if task.must? then for m in task.must then if t.must.indexOf(m) < 0 then t.must.push(m)
     t.run = (options) => @run(options).then -> task.run(options)
     if primaryTask.before? then t.before = primaryTask.before
     if primaryTask.after? then t.after = primaryTask.after
