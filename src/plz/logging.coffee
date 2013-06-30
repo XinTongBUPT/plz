@@ -20,18 +20,18 @@ setDebug = (bool) ->
   isDebug
 
 colors =
-  yellow: "33;1"
+  yellow: "38;5;11"
   orange: "33"
   red: "31"
   purple: "35"
   blue: "34"
   brightBlue: "38;5;12"
-  brightCyan: "36;1"
+  brightCyan: "38;5;14"
   cyan: "36"
   green: "32"
   black: "30"
   gray: "37"
-  white: "37;1"
+  white: "38;5;15"
   off: "0"
 
 inColor = (color, text) ->
@@ -44,7 +44,7 @@ appStartTime = Date.now()
 
 error = (text) -> console.error inColor("red", "ERROR: " + text)
 warning = (text) -> console.log inColor("orange", "Warning: " + text)
-notice = (text) -> console.log text
+notice = (text) -> console.log inColor("yellow", text)
 taskinfo = (text) -> if isVerbose or isDebug then console.log inColor("cyan", text)
 info = (text) -> if isVerbose or isDebug then console.log inColor("purple", text)
 debug = (text) ->
