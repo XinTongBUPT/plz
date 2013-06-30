@@ -1,9 +1,5 @@
 exports.defaults = '''
 
-extend = (map1, map2) ->
-  for k, v of map2 then map1[k] = v
-  map1
-
 # ----- coffee plugin
 extend settings,
   coffee:
