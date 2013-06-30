@@ -62,6 +62,25 @@ or you can run tests alone, choosing the dot display:
 $ plz test display=dot
 ```
 
+As another example, this script pushes my (staging) website whenever I make
+a change on my laptop:
+
+```javascript
+task("build", { watch: "./**/*", run: function() {
+  mark();
+  exec("rsync -avP ./ example.com:/web/leet/staging/");
+}});
+```
+
+When run with the "-w" (watch) option:
+
+```sh
+$ plz -w
+```
+
+it displays the current time (that's what `mark()` does) and rsync's the
+current folder whenever any file is modified.
+
 
 How it works
 ------------
@@ -84,8 +103,8 @@ without triggering any more file watches.
 
 Normally, plz will then exit.
 
-If it's running in `--watch` mode, plz will block instead, waiting for file
-watches to trigger, until killed (usually by hitting control-C).
+If it's running in `--watch` (`-w`) mode, plz will block instead, waiting for|
+file watches to trigger, until killed (usually by hitting control-C).
 
 The `--verbose` (`-v`) option will make plz display the names of tasks as it
 executes them. `--debug` will make it dump more detailed debugging info about
@@ -161,6 +180,7 @@ The following globals are available to tasks:
     - `notice(text)`
     - `warning(text)`
     - `error(text)`
+    - `mark()` (to quickly log the current date/time)
 - `plz` object containing global state functions:
     - `useColors()`: get or set `--color`
     - `logVerbose()`: get or set `--verbose`

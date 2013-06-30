@@ -63,7 +63,8 @@ defaultGlobals =
   info: logging.info
   notice: logging.notice
   warning: logging.warning
-  error: logging.error  
+  error: logging.error
+  mark: logging.mark
   # local convenience
   touch: (args...) ->
     logging.info "+ touch #{trace(args)}"

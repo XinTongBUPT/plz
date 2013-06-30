@@ -1,4 +1,5 @@
 sprintf = require 'sprintf'
+strftime = require 'strftime'
 
 usingColors = process.stdout.isTTY
 useColors = (bool) ->
@@ -51,6 +52,8 @@ debug = (text) ->
   if not isDebug then return
   now = (Date.now() - appStartTime) / 1000.0
   console.log inColor("green", sprintf.sprintf "[%06.3f] %s", now, text)
+mark = ->
+  console.log inColor("yellow", "----- ") + inColor("brightCyan", strftime("%H:%M:%S [%d-%b-%Y]"))
 
 exports.useColors = useColors
 exports.setVerbose = setVerbose
@@ -62,3 +65,5 @@ exports.notice = notice
 exports.taskinfo = taskinfo
 exports.info = info
 exports.debug = debug
+exports.mark = mark
+
