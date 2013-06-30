@@ -78,8 +78,8 @@ When run with the "-w" (watch) option:
 $ plz -w
 ```
 
-it displays the current time (that's what `mark()` does) and rsync's the
-current folder whenever any file is modified.
+it monitors the current folder. Whenever a file is modified, it displays the
+current time (that's what `mark()` does) and calls rsync.
 
 
 How it works
