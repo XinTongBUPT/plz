@@ -93,3 +93,28 @@ describe "TaskRunner", ->
       completed.should.eql [ "first", "second" ]
       runner.queue.length.should.eql(0)
       runner.table.close()
+
+  it "will re-enqueue a task that triggers itself", futureTest withTempFolder (folder) ->
+    completed = []
+    runner = new TaskTable().runner
+    runner.table.tasks =
+      "primary": new Task "primary", must: "setup", watch: "#{folder}/out.x", run: ->
+        completed.push "primary"
+        if fs.existsSync "#{folder}/out2.x" then return
+        if fs.existsSync "#{folder}/out.x"
+          fs.writeFileSync "#{folder}/out.x", "second write!"
+          fs.writeFileSync "#{folder}/out2.x", "now stop."
+        else
+          fs.writeFileSync "#{folder}/out.x", "first write!"
+      "setup": new Task "setup", watch: "#{folder}/out.x", run: ->
+        completed.push "setup"
+    runner.table.activate(persistent: false, interval: 250)
+    .then ->
+      runner.enqueue "primary"
+      completed.should.eql []
+      runner.runQueue()
+    .then ->
+      # 1. write out.x; 2. notice out.x, write out.x and out2.x; 3. notice out2.x and stop.
+      completed.should.eql [ "setup", "primary", "setup", "primary", "setup", "primary" ]
+      runner.queue.length.should.eql(0)
+      runner.table.close()
