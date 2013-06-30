@@ -353,7 +353,7 @@ executed.
 Manifesto
 ---------
 
-Why does this exist?
+Why does this even exist?
 
 "Make" is 1000 years old, and somehow still the gold standard of build
 automation. "Ant" was an embarrassment; "Maven" thought maybe the problem with
@@ -380,7 +380,7 @@ Developing
 Install dependencies using node, then build with a current version of plz:
 
     $ npm install
-    $ plz build
+    $ plz
 
 Pull requests and bug reports are tracked on github:
 https://github.com/robey/plz
