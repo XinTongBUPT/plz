@@ -3,7 +3,7 @@
 - a task list, with help (description) lines, shows up at "--help" and
   "--tasks".
 
-- a default ("all") command runs when nothing else is specified.
+- a default ("build") command runs when nothing else is specified.
 
 - can turn off colors with "--no-colors" or a dotfile.
 
