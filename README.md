@@ -109,7 +109,7 @@ without triggering any more file watches.
 
 Normally, plz will then exit.
 
-If it's running in `--watch` (`-w`) mode, plz will block instead, waiting for|
+If it's running in `--watch` (`-w`) mode, plz will block instead, waiting for
 file watches to trigger, until killed (usually by hitting control-C).
 
 The `--verbose` (`-v`) option will make plz display the names of tasks as it
