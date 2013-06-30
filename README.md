@@ -14,6 +14,23 @@ make simple tasks trivial, and difficult tasks easier. Highlights:
   tasks, or they can be run automatically when a file changes, based on glob
   patterns.
 
+## Table of contents
+
+- [Install](#install)
+- [Example](#example)
+- [How it works](#how-it-works)
+- [Defining tasks](#defining-tasks)
+- [File watches](#file-watches)
+- [Globals](#globals)
+- [exec](#exec)
+- [Settings](#settings)
+- [Before and after tasks](#before-and-after-tasks)
+- [Plugins](#plugins)
+- [Manifesto](#manifesto)
+- [Developing](#developing)
+- [License](#license)
+- [Authors](#authors)
+
 
 Install
 -------
