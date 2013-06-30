@@ -26,7 +26,7 @@ extend settings,
     options: [ "--colors" ]
 
 plugins.mocha = ->
-  task "test-mocha", attach: "test", description: "run unit tests", run: ->
+  task "test-mocha", attach: "test", must: "build", description: "run unit tests", run: ->
     if settings.mocha.grep? then settings.mocha.options.push "--grep #{settings.mocha.grep}"
     exec "#{settings.mocha.bin} -R #{settings.mocha.display} #{settings.mocha.options.join(' ')}"
 
