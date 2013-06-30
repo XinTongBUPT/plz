@@ -194,15 +194,14 @@ The following globals are available to tasks:
     - `version()`: current plz version
     - `cwd()`: get or set the current folder
     - `rulesFile()`: get or set the name of the plz rules file (usually "build.plz")
-- `load(pluginName)`: see the section on plugins below
+- `load(pluginName)`: loads a plugin (see "plugins" below)
 - `plugins`: object that maps plugin names to functions (see "plugins" below)
 
 
 exec
 ----
 
-The `exec` function in plz is a lightweight wrapper around node's `spawn`
-function.
+The `exec` function is a lightweight wrapper around node's `spawn` function.
 
 ```coffeescript
 exec(command, options)
@@ -296,9 +295,9 @@ convenience for plugins to add code to common targets like "build" and "test".
 Plugins
 -------
 
-Plugins are just code that can be loaded into your build rules to define new
-tasks or settings. Usually they add support for a specific language or tool.
-For example, to load support for mocha (a javascript test system):
+Plugins are code that can be loaded into your build rules to define new tasks
+or settings. Usually they add support for a specific language or tool. For
+example, to load support for mocha (a javascript test system):
 
 ```coffeescript
 load "mocha"
