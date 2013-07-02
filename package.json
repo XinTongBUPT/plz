@@ -31,6 +31,7 @@
     "touch": "*"
   },
   "devDependencies": {
+    "minimatch": "*",
     "mocha": "*",
     "should": "*"
   },
