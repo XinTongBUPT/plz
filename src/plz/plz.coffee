@@ -99,8 +99,8 @@ runWithTable = (options, settings, table, startTime) ->
     if not table.getTask(name)? then throw new Error("No task named '#{name}'")
   table.activate(persistent: options.watch, interval: 250)
   .then ->
-    for name in options.tasklist then table.enqueue(name)
-    table.runQueue()
+    for name in options.tasklist then table.runner.enqueue(name)
+    table.runner.runQueue()
   .then ->
     if options.watch
       logging.taskinfo "Watching for changes..."

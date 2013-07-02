@@ -1,6 +1,8 @@
 plz
 ===
 
+[![Build Status](https://travis-ci.org/robey/plz.png?branch=master)](https://travis-ci.org/robey/plz)
+
 Plz is a script automation system like "make", "rake", and "cake". It aims to
 make simple tasks trivial, and difficult tasks easier. Highlights:
 

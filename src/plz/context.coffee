@@ -91,9 +91,9 @@ makeContext = (filename, table) ->
     table.addTask(new task.Task(name, options))
   globals.runTask = (name, args={}) ->
     logging.debug "Injecting task: #{name}"
-    table.enqueue(name, args)
+    table.runner.enqueue(name, args)
 
-  globals.settings = table.settings
+  globals.settings = table.runner.settings
 
   # stub in a "project" object for plugins to play with.
   globals.project =

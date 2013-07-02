@@ -60,7 +60,7 @@ compileRulesFile = (settings) ->
 
 compile = (data, settings={}) ->
   table = new TaskTable()
-  table.settings = settings
+  table.runner.settings = settings
   sandbox = context.makeContext(Config.rulesFile(), table)
   plugins.eval$(defaults.defaults, sandbox: sandbox, filename: "<defaults>")
   plugins.eval$(data, sandbox: sandbox, filename: Config.rulesFile())
