@@ -18,7 +18,7 @@
   ],
 
   "scripts": {
-    "test": "plz test"
+    "test": "plz test -v"
   },
   "dependencies": {
     "coffee-script": "*",
