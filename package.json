@@ -18,7 +18,7 @@
   ],
 
   "scripts": {
-    "test": "plz test -v"
+    "test": "plz test -v --color"
   },
   "dependencies": {
     "coffee-script": "*",
@@ -36,8 +36,10 @@
   },
   "main": "./lib/plz",
   "files": [
-    "lib/plz/*",
-    "bin/plz"
+    "build.plz",
+    "lib",
+    "bin/plz",
+    "test"
   ],
   "bin": {
     "plz": "bin/plz"
@@ -48,6 +50,6 @@
   },
 
   "dist": {
-    "tarball": "http://www.lag.net/npm/plz/0.9.0/"
+    "tarball": "http://www.lag.net/npm/plz/0.10.0/"
   }
 }
