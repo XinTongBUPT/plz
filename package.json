@@ -1,6 +1,6 @@
 {
   "name": "plz",
-  "version": "0.9.9",
+  "version": "0.10.0",
   "description": "simple build automation",
   "keywords": [ "make", "build" ],
   "author": "Robey Pointer <robeypointer@gmail.com>",
