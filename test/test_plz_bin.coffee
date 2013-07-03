@@ -115,9 +115,9 @@ describe "plz (system binary)", ->
         p.stdout.should.match(/hi.\nnormal watch\nnormal watch\n/)
       f2 = Q.delay(250).then ->
         fs.writeFileSync "#{folder}/stuff/new.x", "new"
-        Q.delay(250).then ->
+        Q.delay(500).then ->
           fs.writeFileSync "#{folder}/stuff/exists.x", "different!"
-      f3 = Q.delay(1000).then ->
+      f3 = Q.delay(2000).then ->
         fs.writeFileSync "#{folder}/die.x", "die!"
       Q.all([ f1, f2, f3 ])
 
@@ -127,9 +127,9 @@ describe "plz (system binary)", ->
       fs.writeFileSync "#{folder}/stuff/exists.x", "exists"
       f1 = execFuture("#{binplz} -w -f rules").then (p) ->
         p.stdout.should.match(/hi.\nall watch\n/)
-      f2 = Q.delay(250).then ->
+      f2 = Q.delay(500).then ->
         fs.unlinkSync "#{folder}/stuff/exists.x"
-      f3 = Q.delay(1000).then ->
+      f3 = Q.delay(2000).then ->
         fs.writeFileSync "#{folder}/die.x", "die!"
       Q.all([ f1, f2, f3 ])
 
