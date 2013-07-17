@@ -414,3 +414,10 @@ Authors
 -------
 
 @robey - Robey Pointer <robeypointer@gmail.com>
+
+
+Thanks
+------
+
+@azer for introducing me to the idea of having file triggers launch tasks.
+@dbrock for letting me use the name on npm.
