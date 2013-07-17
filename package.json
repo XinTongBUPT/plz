@@ -1,6 +1,6 @@
 {
   "name": "plz",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "simple build automation",
   "keywords": [ "make", "build" ],
   "author": "Robey Pointer <robeypointer@gmail.com>",
@@ -48,9 +48,5 @@
   "preferGlobal": "true",
   "engines": {
     "node" : ">=0.10.1"
-  },
-
-  "dist": {
-    "tarball": "http://www.lag.net/npm/plz/0.10.0/"
   }
 }
