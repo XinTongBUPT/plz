@@ -32,6 +32,7 @@ make simple tasks trivial, and difficult tasks easier. Highlights:
 - [Developing](#developing)
 - [License](#license)
 - [Authors](#authors)
+- [Thanks](#thanks)
 
 
 Install
@@ -413,11 +414,11 @@ Apache 2 (open-source) license, included in 'LICENSE.txt'.
 Authors
 -------
 
-@robey - Robey Pointer <robeypointer@gmail.com>
+- @robey - Robey Pointer <robeypointer@gmail.com>
 
 
 Thanks
 ------
 
-@azer for introducing me to the idea of having file triggers launch tasks.
-@dbrock for letting me use the name on npm.
+- @azer for introducing me to the idea of having file triggers launch tasks.
+- @dbrock for letting me use the name on npm.
