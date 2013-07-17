@@ -113,9 +113,9 @@ describe "plz (system binary)", ->
       fs.writeFileSync "#{folder}/stuff/exists.x", "exists"
       f1 = execFuture("#{binplz} -w -f rules").then (p) ->
         p.stdout.should.match(/hi.\nnormal watch\nnormal watch\n/)
-      f2 = Q.delay(250).then ->
+      f2 = Q.delay(500).then ->
         fs.writeFileSync "#{folder}/stuff/new.x", "new"
-        Q.delay(500).then ->
+        Q.delay(1000).then ->
           fs.writeFileSync "#{folder}/stuff/exists.x", "different!"
       f3 = Q.delay(2000).then ->
         fs.writeFileSync "#{folder}/die.x", "die!"
