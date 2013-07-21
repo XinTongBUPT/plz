@@ -58,8 +58,13 @@ contextStack = [ null ]
 eval$ = (code, options={}) ->
   code = code.toString()
   # FIXME can we do better at detecting js?
-  isCoffee = (code.indexOf("->") > 0)
-  if isCoffee then code = coffee.compile(code, bare: true)
+  isCoffee = (code.indexOf("->") >= 0) or (code.indexOf("{") < 0)
+  if isCoffee
+    code = try
+      coffee.compile(code, bare: true)
+    catch e
+      # might not be coffee-script. try js.
+      code
   sandbox = options.sandbox or contextStack[0]
   contextStack.unshift sandbox
   try
