@@ -1,6 +1,6 @@
 logging = require("./logging")
 
-VERSION = "0.11.0-20130716"
+VERSION = "1.0.0"
 
 # put all runtime config stuff in here, so it can be accessed from a running
 # build script too.
