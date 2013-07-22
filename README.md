@@ -1,4 +1,4 @@
-<img src="./docs/images/plz.png" width="80">
+<img src="https://github.com/robey/plz/raw/master/docs/images/plz.png" width="80">
 
 [![Build Status](https://travis-ci.org/robey/plz.png?branch=master)](https://travis-ci.org/robey/plz)
 
