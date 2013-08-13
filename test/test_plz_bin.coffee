@@ -328,8 +328,8 @@ task "build", run: ->
 """
 
 SETTINGS_TEST_2 = """
-task "build", run: (wut) ->
-  console.log wut.citrus
+task "build", run: (context) ->
+  console.log context.settings.citrus
 """
 
 SETTINGS_TEST_3 = '''

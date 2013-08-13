@@ -2,10 +2,16 @@ logging = require("./logging")
 Q = require 'q'
 util = require 'util'
 
-# add a [ name, args ] to a list, but only if the named task isn't already in the list.
-pushUnique = (list, name) ->
-  for n in list then if n == name then return false
-  list.push name
+# add a (name, arg) to a list.
+# if 'name' is not in the list, [ name, [ arg ] ] is added to the end.
+# if 'name' is already in the list, 'arg' is added to the arg-list using the
+# same algorithm -- it's only added if it's not already there.
+pushUnique = (list, name, arg = []) ->
+  for [ n, args ] in list
+    if n == name
+      for a in arg then if args.indexOf(a) < 0 then args.push a
+      return false
+  list.push [ name, arg ]
   true
 
 # handle the queue of tasks to run, and run them.
@@ -16,8 +22,8 @@ class TaskRunner
     @settings = {}
 
   # queue a task (by name). doesn't actually run the queue.
-  enqueue: (name) ->
-    pushUnique @queue, name
+  enqueue: (name, filename = null) ->
+    pushUnique @queue, name, (if filename? then [filename] else [])
 
   # run all queued tasks, and their depedencies. 
   # returns a promise that will resolve when all the tasks have run.
@@ -41,10 +47,10 @@ class TaskRunner
 
   # flush the queued tasks (and their dependencies) into a given task list.
   flushQueue: (tasklist = [], skip = {}) ->
-    for name in @queue
+    for [ name, filenames ] in @queue
       for t in @table.topoSort(name, skip)
         if t == name
-          pushUnique tasklist, name
+          pushUnique tasklist, name, filenames
         else
           pushUnique tasklist, t
     @queue = []
@@ -53,21 +59,24 @@ class TaskRunner
   # loop through a tasklist, running one at a time, skipping dupes.
   runTasks: (tasklist, completed = {}) ->
     if tasklist.length == 0 then return Q(completed)
-    name = tasklist.shift()
+    [ name, filenames ] = tasklist.shift()
     if completed[name]?
       @runTasks(tasklist, completed)
     else
-      @runTask(name, completed).then =>
+      @runTask(name, filenames, completed).then =>
         # remove anything from the queue that's already in the current tasklist.
-        @queue = @queue.filter ([ name, args ]) ->
-          for [ n, a ] in tasklist then if name == n then return false
+        @queue = @queue.filter ([ name, filenames ]) ->
+          for [ tasklist_name, tasklist_filenames ] in tasklist
+            if name == tasklist_name
+              for f in filenames then if tasklist_filenames.indexOf(f) < 0 then tasklist_filenames.push(f)
+              return false
           true
         @runTasks(tasklist, completed)
 
   # run one task, then check for watch triggers
-  runTask: (name, completed = {}) ->
+  runTask: (name, filenames, completed = {}) ->
     completed[name] = true
-    @table.getTask(name).run(@settings)
+    @table.getTask(name).run({ settings: @settings, filenames: filenames })
     .fail (error) ->
       error.message = "Task '#{name}' failed: #{error.message}"
       throw error

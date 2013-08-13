@@ -104,8 +104,8 @@ class TaskTable
 
   activateWatch: (watch, options, name, alsoDeletes) ->
     watcher = globwatcher.globwatcher(watch, options)
-    handler = =>
-      if @runner.enqueue(name)
+    handler = (filename) =>
+      if @runner.enqueue(name, filename)
         logging.taskinfo "--- File change triggered: #{name}"
         @runner.runQueue()
     watcher.on "added", handler

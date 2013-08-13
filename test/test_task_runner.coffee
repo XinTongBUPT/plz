@@ -145,3 +145,38 @@ describe "TaskRunner", ->
       completed.should.eql [ "build", "test" ]
       runner.queue.length.should.eql(0)
       runner.table.close()
+
+  it "passes global settings to the task", futureTest withTempFolder (folder) ->
+    completed = []
+    runner = new TaskTable().runner
+    runner.settings.peaches = "10"
+    runner.table.tasks =
+      "go": new Task "go", run: (context) -> completed.push context.settings.peaches
+    runner.enqueue "go"
+    completed.should.eql []
+    runner.runQueue().then ->
+      completed.should.eql [ "10" ]
+
+  it "passes the changed filename list to the task", futureTest withTempFolder (folder) ->
+    completed = []
+    runner = new TaskTable().runner
+    runner.table.tasks =
+      "go": new Task "go", run: (context) -> completed.push context.filenames
+    runner.enqueue "go", "file1"
+    runner.enqueue "go", "file2"
+    runner.enqueue "go", "file1"
+    completed.should.eql []
+    runner.runQueue().then ->
+      completed.should.eql [ [ "file1", "file2" ] ]
+
+  it "collects filename changes from events while a task is enqueued", futureTest withTempFolder (folder) ->
+    completed = []
+    runner = new TaskTable().runner
+    runner.table.tasks =
+      "helper": new Task "helper", run: (context) -> runner.enqueue "go", "file2"
+      "go": new Task "go", run: (context) -> completed.push context.filenames
+    runner.enqueue "helper"
+    runner.enqueue "go", "file1"
+    completed.should.eql []
+    runner.runQueue().then ->
+      completed.should.eql [ [ "file1", "file2" ] ]
