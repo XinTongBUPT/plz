@@ -133,6 +133,18 @@ describe "plz (system binary)", ->
         fs.writeFileSync "#{folder}/die.x", "die!"
       Q.all([ f1, f2, f3 ])
 
+    it "and reports their names", futureTest withTempFolder (folder) ->
+      shell.mkdir "-p", "#{folder}/stuff"
+      fs.writeFileSync "#{folder}/rules", RUN_TEST_4.replace(/%STUFF%/g, "#{folder}/stuff").replace(/%FOLDER%/g, "#{folder}")
+      fs.writeFileSync "#{folder}/stuff/exists.x", "exists"
+      f1 = execFuture("#{binplz} -w -f rules").then (p) ->
+        p.stdout.replace("#{folder}/stuff", "%STUFF%").should.match(/hi.\nchanged: %STUFF%\/new.x\n/)
+      f2 = Q.delay(500).then ->
+        fs.writeFileSync "#{folder}/stuff/new.x", "new"
+      f3 = Q.delay(2000).then ->
+        fs.writeFileSync "#{folder}/die.x", "die!"
+      Q.all([ f1, f2, f3 ])
+
   it "can get and set configs", futureTest withTempFolder (folder) ->
     fs.writeFileSync "#{folder}/rules", CONFIG_TEST
     execFuture("#{binplz} -f rules test").then (p) ->
@@ -298,6 +310,16 @@ task "watch", watch: "%STUFF%/*", run: ->
 
 task "watchall", watchall: "%STUFF%/*", run: ->
   notice "all watch"
+
+task "end", watch: "%FOLDER%/die.x", run: ->
+  process.exit 0
+"""
+
+RUN_TEST_4 = """
+task "build", run: -> notice "hi."
+
+task "watch", watch: "%STUFF%/*.x", run: (context) ->
+  notice "changed: \#{context.filenames.join(', ')}"
 
 task "end", watch: "%FOLDER%/die.x", run: ->
   process.exit 0
