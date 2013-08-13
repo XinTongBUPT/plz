@@ -3,6 +3,7 @@
 #
 
 child_process = require 'child_process'
+glob = require 'glob'
 path = require 'path'
 Q = require 'q'
 shell = require 'shelljs'
@@ -58,6 +59,11 @@ defaultGlobals =
   process: process
   Buffer: Buffer
   Q: Q
+  glob: (pattern, options) ->
+    deferred = Q.defer()
+    glob pattern, options, (error, files) ->
+      if error? then deferred.reject(error) else deferred.resolve(files)
+    deferred.promise
   # logging:
   debug: logging.debug
   info: logging.info

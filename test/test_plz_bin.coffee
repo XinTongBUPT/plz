@@ -62,6 +62,15 @@ describe "plz (system binary)", ->
     .then (p) ->
       p.stdout.should.match(/Warning: bumblebee cicada rules\n/)
 
+  it "can do glob", futureTest withTempFolder (folder) ->
+    fs.writeFileSync "#{folder}/rules", GLOB_TEST
+    shell.mkdir "-p", "#{folder}/stuff"
+    fs.writeFileSync "#{folder}/stuff/file1", "first"
+    fs.writeFileSync "#{folder}/stuff/file2", "not first"
+    execFuture("#{binplz} -f rules")
+    .then (p) ->
+      p.stdout.should.match(/Warning: files: stuff\/file1, stuff\/file2\n/)
+
   it "can attach a task before another one", futureTest withTempFolder (folder) ->
     fs.writeFileSync "#{folder}/rules", BEFORE_TEST
     execFuture("#{binplz} -f rules main")
@@ -242,6 +251,12 @@ task "wiggle", run: ->
   cp "aardvark", "bumblebee"
   mv "aardvark", "cicada"
   warning(ls(".").join(" "))
+"""
+
+GLOB_TEST = """
+task "build", run: ->
+  glob("stuff/*").then (files) ->
+    warning("files: " + files.join(", "))
 """
 
 BEFORE_TEST = """
