@@ -147,7 +147,7 @@ describe "plz (system binary)", ->
       fs.writeFileSync "#{folder}/rules", RUN_TEST_4.replace(/%STUFF%/g, "#{folder}/stuff").replace(/%FOLDER%/g, "#{folder}")
       fs.writeFileSync "#{folder}/stuff/exists.x", "exists"
       f1 = execFuture("#{binplz} -w -f rules").then (p) ->
-        p.stdout.replace("#{folder}/stuff", "%STUFF%").should.match(/hi.\nchanged: %STUFF%\/new.x\n/)
+        p.stdout.replace(new RegExp("#{folder}/stuff", "g"), "%STUFF%").should.match(/hi.\nchanged: %STUFF%\/new.x\ncurrent: %STUFF%\/exists.x, %STUFF%\/new.x\n/)
       f2 = Q.delay(500).then ->
         fs.writeFileSync "#{folder}/stuff/new.x", "new"
       f3 = Q.delay(2000).then ->
@@ -334,7 +334,8 @@ RUN_TEST_4 = """
 task "build", run: -> notice "hi."
 
 task "watch", watch: "%STUFF%/*.x", run: (context) ->
-  notice "changed: \#{context.filenames.join(', ')}"
+  notice "changed: \#{context.changed_files.join(', ')}"
+  notice "current: \#{context.current_files.join(', ')}"
 
 task "end", watch: "%FOLDER%/die.x", run: ->
   process.exit 0

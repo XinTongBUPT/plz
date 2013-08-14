@@ -76,7 +76,11 @@ class TaskRunner
   # run one task, then check for watch triggers
   runTask: (name, filenames, completed = {}) ->
     completed[name] = true
-    @table.getTask(name).run({ settings: @settings, filenames: filenames })
+    context = { settings: @settings }
+    if filenames.length > 0 then context.changed_files = filenames
+    task = @table.getTask(name)
+    for w in (task.watchers or []) then context.current_files = (context.current_files or []).concat(w.currentSet())
+    task.run(context)
     .fail (error) ->
       error.message = "Task '#{name}' failed: #{error.message}"
       throw error
