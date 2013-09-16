@@ -17,8 +17,17 @@ Config =
     if filename? then @_rulesFile = filename
     @_rulesFile
 
+  stateFile: (filename) ->
+    if filename? then @_stateFile = filename
+    @_stateFile
+    
   version: ->
     VERSION
+
+  # for tests
+  reset: ->
+    @_rulesFile = null
+    @_stateFile = null
 
 
 exports.Config = Config

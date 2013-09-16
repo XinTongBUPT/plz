@@ -10,6 +10,7 @@ Config = require("./config").Config
 context = require("./context")
 logging = require("./logging")
 rulesfile = require("./rulesfile")
+statefile = require("./statefile")
 task = require("./task")
 task_table = require("./task_table")
 
@@ -27,6 +28,7 @@ longOptions =
   debug: Boolean
   "no-colors": Boolean
   colors: Boolean
+  zork: Boolean
 
 shortOptions =
   f: [ "--filename" ]
@@ -34,6 +36,7 @@ shortOptions =
   F: [ "--folder" ]
   v: [ "--verbose" ]
   D: [ "--debug" ]
+  x: [ "--zork" ]
 
 main = ->
   settings = {}
@@ -97,10 +100,12 @@ runWithTable = (options, settings, table, startTime) ->
   logging.debug "Settings: #{util.inspect(settings)}"
   for name in options.tasklist
     if not table.getTask(name)? then throw new Error("No task named '#{name}'")
-  table.activate(persistent: options.watch, interval: 250)
+  if options.zork then statefile.loadState() else Q(null)
+  .then (state) ->
+    table.activate(persistent: options.watch, interval: 250, state: state)
   .then ->
     for name in options.tasklist then table.runner.enqueue(name)
-    table.runner.runQueue()
+    table.runQueue()
   .then ->
     if options.watch
       logging.taskinfo "Watching for changes..."
@@ -150,7 +155,9 @@ parseTaskList = (options, settings={}) ->
       obj[segments[segments.length - 1]] = m[2]
     else
       throw new Error("I don't know what to do with '#{word}'")
-  if tasklist.length == 0 then tasklist.push DEFAULT_TASK
+  if tasklist.length == 0
+    if not (options.watch or options.zork)
+      tasklist.push DEFAULT_TASK
   options.tasklist = tasklist
   [ tasklist, settings ]
 

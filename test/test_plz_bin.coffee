@@ -120,7 +120,7 @@ describe "plz (system binary)", ->
       shell.mkdir "-p", "#{folder}/stuff"
       fs.writeFileSync "#{folder}/rules", RUN_TEST_2.replace(/%STUFF%/g, "#{folder}/stuff").replace(/%FOLDER%/g, "#{folder}")
       fs.writeFileSync "#{folder}/stuff/exists.x", "exists"
-      f1 = execFuture("#{binplz} -w -f rules").then (p) ->
+      f1 = execFuture("#{binplz} -w -f rules build").then (p) ->
         p.stdout.should.match(/hi.\nnormal watch\nnormal watch\n/)
       f2 = Q.delay(500).then ->
         fs.writeFileSync "#{folder}/stuff/new.x", "new"
@@ -134,7 +134,7 @@ describe "plz (system binary)", ->
       shell.mkdir "-p", "#{folder}/stuff"
       fs.writeFileSync "#{folder}/rules", RUN_TEST_3.replace(/%STUFF%/g, "#{folder}/stuff").replace(/%FOLDER%/g, "#{folder}")
       fs.writeFileSync "#{folder}/stuff/exists.x", "exists"
-      f1 = execFuture("#{binplz} -w -f rules").then (p) ->
+      f1 = execFuture("#{binplz} -w -f rules build").then (p) ->
         p.stdout.should.match(/hi.\nall watch\n/)
       f2 = Q.delay(500).then ->
         fs.unlinkSync "#{folder}/stuff/exists.x"
@@ -146,7 +146,7 @@ describe "plz (system binary)", ->
       shell.mkdir "-p", "#{folder}/stuff"
       fs.writeFileSync "#{folder}/rules", RUN_TEST_4.replace(/%STUFF%/g, "#{folder}/stuff").replace(/%FOLDER%/g, "#{folder}")
       fs.writeFileSync "#{folder}/stuff/exists.x", "exists"
-      f1 = execFuture("#{binplz} -w -f rules").then (p) ->
+      f1 = execFuture("#{binplz} -w -f rules build").then (p) ->
         p.stdout.replace(new RegExp("#{folder}/stuff", "g"), "%STUFF%").should.match(/hi.\nchanged: %STUFF%\/new.x\ncurrent: %STUFF%\/exists.x, %STUFF%\/new.x\n/)
       f2 = Q.delay(500).then ->
         fs.writeFileSync "#{folder}/stuff/new.x", "new"

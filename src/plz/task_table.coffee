@@ -3,6 +3,7 @@ Q = require 'q'
 util = require 'util'
 
 logging = require("./logging")
+statefile = require("./statefile")
 Task = require("./task").Task
 TaskRunner = require("./task_runner").TaskRunner
 
@@ -17,6 +18,8 @@ class TaskTable
   getNames: -> Object.keys(@tasks).sort()
   getTask: (name) -> @tasks[name]
   addTask: (task) -> @tasks[task.name] = task
+  allTasks: -> for name in @getNames() then @getTask(name)
+  allWatchers: -> [].concat.apply([], for task in @allTasks() then (task.watchers or []))
 
   validate: ->
     @validateReferences()
@@ -41,13 +44,12 @@ class TaskTable
 
   # can't depend on a task that's before/after some other task (cuz it'll go away in consolidation).
   validateDependenciesExist: ->
-    for name in @getNames()
-      task = @tasks[name]
+    for task in @allTasks()
       for dep in (task.must or []).sort()
         t = @tasks[dep]
         if t.before? or t.after? or t.attach?
           target = t.before or t.after or t.attach?
-          throw new Error("Task #{name} can't require #{dep} because #{dep} is a decorator for #{target}")
+          throw new Error("Task #{t.name} can't require #{dep} because #{dep} is a decorator for #{target}")
 
   # look for cycles.
   validateCycles: ->
@@ -84,20 +86,23 @@ class TaskTable
     for name in @getNames() then process(@tasks[name], "after")
     for name in @getNames() then process(@tasks[name], "attach")
 
+  runQueue: ->
+    @runner.runQueue().then =>
+      statefile.saveState(@snapshotWatches())
+
   # turn on all the watches.
-  # options: { persistent, debounceInterval, interval }
+  # options: { persistent, debounceInterval, interval, snapshot }
   activate: (options) ->
     options.debug = (text) -> logging.debug "watch: #{text}"
     promises = []
-    for name in @getNames() then do (name) =>
-      task = @getTask(name)
+    for task in @allTasks() then do (task) =>
       task.watchers = []
       if task.watch?
-        watcher = @activateWatch(task.watch, options, name, false)
+        watcher = @activateWatch(task.watch, options, task.name, false)
         promises.push watcher.ready
         task.watchers.push watcher
       if task.watchall?
-        watcher = @activateWatch(task.watchall, options, name, true)
+        watcher = @activateWatch(task.watchall, options, task.name, true)
         promises.push watcher.ready
         task.watchers.push watcher
     Q.all(promises)
@@ -107,7 +112,7 @@ class TaskTable
     handler = (filename) =>
       if @runner.enqueue(name, filename)
         logging.taskinfo "--- File change triggered: #{name}"
-        @runner.runQueue()
+        @runQueue()
     watcher.on "added", handler
     watcher.on "changed", handler
     if alsoDeletes then watcher.on "deleted", handler
@@ -115,18 +120,18 @@ class TaskTable
 
   # turn off all watches
   close: ->
-    for name in @getNames()
-      task = @getTask(name)
-      if task.watchers? then task.watchers.map (w) -> w.close()
+    for w in @allWatchers() then w.close()
 
   # check any watched files, proactively.
   # returns a promise that will be fulfilled when the checks are done.
   checkWatches: ->
-    Q.all(
-      for name in @getNames()
-        task = @getTask(name)
-        if task.watchers? then Q.all(task.watchers.map((w) -> w.check())) else Q(null)
-    )
+    Q.all(for w in @allWatchers() then w.check())
+
+  # return a union of the saved states of any watchers
+  snapshotWatches: ->
+    snapshot = {}
+    for w in @allWatchers() then for k, v of w.snapshot() then snapshot[k] = v
+    snapshot
 
   # return a list of task names, sorted by dependency order, needed for this task.
   # 'skip' is a list of dependencies to skip.

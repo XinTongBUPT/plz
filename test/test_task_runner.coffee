@@ -7,6 +7,7 @@ should = require 'should'
 touch = require 'touch'
 util = require 'util'
 
+Config = require("../lib/plz/config").Config
 logging = require("../lib/plz/logging")
 Task = require("../lib/plz/task").Task
 TaskTable = require("../lib/plz/task_table").TaskTable
@@ -17,6 +18,9 @@ futureTest = test_util.futureTest
 withTempFolder = test_util.withTempFolder
 
 describe "TaskRunner", ->
+  beforeEach ->
+    Config.reset()
+
   it "enqueues", ->
     runner = new TaskTable().runner
     runner.queue.length.should.eql(0)
@@ -134,7 +138,7 @@ describe "TaskRunner", ->
       "build": new Task "build", run: ->
         completed.push "build"
         fs.writeFileSync "#{folder}/out.x", "build!"
-      "test": new Task "setup", must: "build", watch: "#{folder}/out.x", run: ->
+      "test": new Task "test", must: "build", watch: "#{folder}/out.x", run: ->
         completed.push "test"
     runner.table.activate(persistent: false, interval: 250)
     .then ->

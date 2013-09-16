@@ -1,6 +1,7 @@
-logging = require("./logging")
 Q = require 'q'
 util = require 'util'
+
+logging = require("./logging")
 
 # add a (name, arg) to a list.
 # if 'name' is not in the list, [ name, [ arg ] ] is added to the end.
@@ -32,7 +33,7 @@ class TaskRunner
     # if we're in the middle of running the queue already, chillax.
     if @state in [ "running", "run-again" ]
       @state = "run-again"
-      return
+      return Q(null)
     # fill in all the dependencies
     tasklist = []
     @flushQueue(tasklist, skip)
@@ -44,6 +45,8 @@ class TaskRunner
       if again
         for name, v of completed then skip[name] = true
         @runQueue(skip)
+      else
+        Q(null)
 
   # flush the queued tasks (and their dependencies) into a given task list.
   flushQueue: (tasklist = [], skip = {}) ->
