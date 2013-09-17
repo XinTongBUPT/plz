@@ -154,6 +154,27 @@ describe "plz (system binary)", ->
         fs.writeFileSync "#{folder}/die.x", "die!"
       Q.all([ f1, f2, f3 ])
 
+  describe "keeps state on watchers", ->
+    it "across executions", futureTest withTempFolder (folder) ->
+      shell.mkdir "-p", "#{folder}/stuff"
+      fs.writeFileSync "#{folder}/rules", RUN_TEST_4.replace(/%STUFF%/g, "#{folder}/stuff").replace(/%FOLDER%/g, "#{folder}")
+      fs.writeFileSync "#{folder}/stuff/exists.x", "exists"
+      execFuture("#{binplz} -x -f rules").then (p) ->
+        p.stdout.should.match(/changed: (\S+)\/stuff\/exists.x\n/)
+        fs.writeFileSync "#{folder}/stuff/exists2.x", "exists"
+        execFuture("#{binplz} -x -f rules")
+      .then (p) ->
+        p.stdout.should.match(/changed: (\S+)\/stuff\/exists2.x\n/)
+
+    it "in an odd place via PLZ_STATE", futureTest withTempFolder (folder) ->
+      shell.mkdir "-p", "#{folder}/stuff"
+      fs.writeFileSync "#{folder}/rules", RUN_TEST_4.replace(/%STUFF%/g, "#{folder}/stuff").replace(/%FOLDER%/g, "#{folder}")
+      fs.writeFileSync "#{folder}/stuff/exists.x", "exists"
+      env = { "PLZ_STATE": "#{folder}/kitten" }
+      for k, v of process.env then env[k] = v
+      execFuture("#{binplz} -D -x -f rules", env: env).then (p) ->
+        fs.readFileSync("#{folder}/kitten").toString().should.match /stuff\/exists.x/
+
   it "can get and set configs", futureTest withTempFolder (folder) ->
     fs.writeFileSync "#{folder}/rules", CONFIG_TEST
     execFuture("#{binplz} -f rules test").then (p) ->

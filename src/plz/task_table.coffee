@@ -91,27 +91,32 @@ class TaskTable
       statefile.saveState(@snapshotWatches())
 
   # turn on all the watches.
-  # options: { persistent, debounceInterval, interval, snapshot }
+  # options: { persistent, debounceInterval, interval, snapshots }
   activate: (options) ->
+    snapshots = options.snapshots
+    delete options.snapshots
     options.debug = (text) -> logging.debug "watch: #{text}"
     promises = []
     for task in @allTasks() then do (task) =>
       task.watchers = []
       if task.watch?
-        watcher = @activateWatch(task.watch, options, task.name, false)
+        watcher = @activateWatch(task.watch, snapshots, options, task.name, false)
         promises.push watcher.ready
         task.watchers.push watcher
       if task.watchall?
-        watcher = @activateWatch(task.watchall, options, task.name, true)
+        watcher = @activateWatch(task.watchall, snapshots, options, task.name, true)
         promises.push watcher.ready
         task.watchers.push watcher
     Q.all(promises)
 
-  activateWatch: (watch, options, name, alsoDeletes) ->
+  activateWatch: (watch, snapshots, optionsIn, name, alsoDeletes) ->
+    options = {}
+    for k, v of optionsIn then options[k] = v
+    if snapshots? then options.snapshot = snapshots[watch.join("\n")] or {}
     watcher = globwatcher.globwatcher(watch, options)
     handler = (filename) =>
       if @runner.enqueue(name, filename)
-        logging.taskinfo "--- File change triggered: #{name}"
+        logging.taskinfo "--- File change triggered: #{name} on #{util.inspect(watch)} by #{filename}"
         @runQueue()
     watcher.on "added", handler
     watcher.on "changed", handler
@@ -129,9 +134,11 @@ class TaskTable
 
   # return a union of the saved states of any watchers
   snapshotWatches: ->
-    snapshot = {}
-    for w in @allWatchers() then for k, v of w.snapshot() then snapshot[k] = v
-    snapshot
+    snapshots = {}
+    for w in @allWatchers()
+      key = w.originalPatterns.join("\n")
+      snapshots[key] = w.snapshot()
+    snapshots
 
   # return a list of task names, sorted by dependency order, needed for this task.
   # 'skip' is a list of dependencies to skip.
@@ -147,6 +154,10 @@ class TaskTable
       rv.push name
     visit(name)
     rv
+
+  toDebug: ->
+    (for task in @allTasks() then task.toDebug()).join("\n")
+
 
 exports.QUEUE_DELAY = QUEUE_DELAY
 exports.TaskTable = TaskTable

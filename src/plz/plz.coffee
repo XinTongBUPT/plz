@@ -100,9 +100,10 @@ runWithTable = (options, settings, table, startTime) ->
   logging.debug "Settings: #{util.inspect(settings)}"
   for name in options.tasklist
     if not table.getTask(name)? then throw new Error("No task named '#{name}'")
-  if options.zork then statefile.loadState() else Q(null)
-  .then (state) ->
-    table.activate(persistent: options.watch, interval: 250, state: state)
+  (if options.zork then statefile.loadState() else Q(null)).then (snapshots) ->
+    table.activate(persistent: options.watch, interval: 250, snapshots: snapshots)
+  .then ->
+    (if options.zork then table.checkWatches() else Q(null))
   .then ->
     for name in options.tasklist then table.runner.enqueue(name)
     table.runQueue()
