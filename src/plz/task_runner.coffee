@@ -37,7 +37,10 @@ class TaskRunner
     # fill in all the dependencies
     tasklist = []
     @flushQueue(tasklist, skip)
-    logging.debug "Run tasks: #{tasklist.join(' ')}"
+    if tasklist.length > 0
+      logging.debug "Run tasks: #{tasklist.map((x) -> x[0]).join(' ')}"
+    else
+      logging.debug "No tasks to run."
     @state = "running"
     @runTasks(tasklist).then (completed) =>
       again = (@state == "run-again") or (@queue.length > 0)

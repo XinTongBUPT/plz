@@ -61,6 +61,9 @@ class Task
       if t.covered.indexOf(c) < 0 then t.covered.push c
     t
 
+  toDebug: ->
+    "#{@name}: must=#{util.inspect(@must)} description=#{util.inspect(@description)} watch=#{@watch} watchall=#{@watchall} before=#{@before} after=#{@after} attach=#{@attach}"
+
 
 exports.TASK_REGEX = TASK_REGEX
 exports.Task = Task

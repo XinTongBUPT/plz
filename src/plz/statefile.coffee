@@ -19,7 +19,7 @@ findStateFile = ->
 loadState = ->
   findStateFile()
   logging.debug "Loading state file #{Config.stateFile()}"
-  if not fs.existsSync(Config.stateFile()) then return Q(null)
+  if not fs.existsSync(Config.stateFile()) then return Q({})
   deferred = Q.defer()
   fs.readFile Config.stateFile(), (error, data) ->
     if error?
@@ -34,7 +34,7 @@ loadState = ->
 
 saveState = (state) ->
   findStateFile()
-  logging.debug "Saving state file #{Config.stateFile()}: #{util.inspect(state)}"
+  logging.debug "Saving state file #{Config.stateFile()}"
   if not fs.existsSync(path.dirname(Config.stateFile())) then console.log "WELP"
   deferred = Q.defer()
   fs.writeFile Config.stateFile(), JSON.stringify(state), (error) ->
