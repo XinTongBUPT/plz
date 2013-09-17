@@ -90,6 +90,16 @@ describe "TaskTable", ->
       c.run(options).then ->
         options.should.eql(x: 630)
 
+    it "in a promise-safe way", futureTest ->
+      table = new TaskTable()
+      table.tasks =
+        "primary": new Task("primary", run: (options) -> Q.delay(100).then(-> options.x += 99))
+        "barnacle": new Task("barnacle", after: "primary", run: (options) -> options.x *= 2)
+      table.consolidate()
+      options = { x: 1 }
+      table.getTask("primary").run(options).then ->
+        options.should.eql(x: 200)
+
     describe "attach", ->
       it "when the attached-to task exists", futureTest ->
         table = new TaskTable()
