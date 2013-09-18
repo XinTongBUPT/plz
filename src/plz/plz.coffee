@@ -28,7 +28,6 @@ longOptions =
   debug: Boolean
   "no-colors": Boolean
   colors: Boolean
-  zork: Boolean
 
 shortOptions =
   f: [ "--filename" ]
@@ -36,7 +35,6 @@ shortOptions =
   F: [ "--folder" ]
   v: [ "--verbose" ]
   D: [ "--debug" ]
-  x: [ "--zork" ]
 
 main = ->
   settings = {}
@@ -100,12 +98,13 @@ runWithTable = (options, settings, table, startTime) ->
   logging.debug "Settings: #{util.inspect(settings)}"
   for name in options.tasklist
     if not table.getTask(name)? then throw new Error("No task named '#{name}'")
-  (if options.zork then statefile.loadState() else Q(null)).then (snapshots) ->
+  statefile.loadState()
+  .then (snapshots) ->
+    logging.debug "Activating watches..."
     table.activate(persistent: options.watch, interval: 250, snapshots: snapshots)
   .then ->
-    (if options.zork then table.checkWatches() else Q(null))
-  .then ->
     for name in options.tasklist then table.runner.enqueue(name)
+    table.runner.start()
     table.runQueue()
   .then ->
     if options.watch
@@ -156,9 +155,6 @@ parseTaskList = (options, settings={}) ->
       obj[segments[segments.length - 1]] = m[2]
     else
       throw new Error("I don't know what to do with '#{word}'")
-  if tasklist.length == 0
-    if not (options.watch or options.zork)
-      tasklist.push DEFAULT_TASK
   options.tasklist = tasklist
   [ tasklist, settings ]
 

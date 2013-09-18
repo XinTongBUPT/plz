@@ -33,7 +33,7 @@ describe "plz", ->
     tasklist.should.eql [ "start" ]
     settings.should.eql(name: "ralph")
     [ tasklist, settings ] = parse([ ])
-    tasklist.should.eql [ "build" ]
+    tasklist.should.eql [ ]
     settings.should.eql({})
 
   describe "readRcFile", ->

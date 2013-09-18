@@ -52,7 +52,7 @@ describe "plz (system binary)", ->
     fs.writeFileSync "#{folder}/plzrc", "options=--verbose\n"
     env = { "PLZRC": "#{folder}/plzrc" }
     for k, v of process.env then env[k] = v
-    execFuture("#{binplz} -f rules", env: env)
+    execFuture("#{binplz} -f rules build", env: env)
     .then (p) ->
       p.stdout.should.match(/hello!\n/)
 
@@ -67,7 +67,7 @@ describe "plz (system binary)", ->
     shell.mkdir "-p", "#{folder}/stuff"
     fs.writeFileSync "#{folder}/stuff/file1", "first"
     fs.writeFileSync "#{folder}/stuff/file2", "not first"
-    execFuture("#{binplz} -f rules")
+    execFuture("#{binplz} -f rules build")
     .then (p) ->
       p.stdout.should.match(/Warning: files: stuff\/file1, stuff\/file2\n/)
 
@@ -188,7 +188,7 @@ describe "plz (system binary)", ->
   describe "can deliver settings to a task", ->
     it "from the command line", futureTest withTempFolder (folder) ->
       fs.writeFileSync "#{folder}/rules", SETTINGS_TEST_1
-      execFuture("#{binplz} -f rules citrus=\'hello there\'").then (p) ->
+      execFuture("#{binplz} -f rules citrus=\'hello there\' build").then (p) ->
         p.stdout.should.match(/^hello there\n/)
 
     it "from a .plzrc file", futureTest withTempFolder (folder) ->
@@ -196,17 +196,17 @@ describe "plz (system binary)", ->
       fs.writeFileSync "#{folder}/plzrc", "citrus=hello there\n"
       env = { "PLZRC": "#{folder}/plzrc" }
       for k, v of process.env then env[k] = v
-      execFuture("#{binplz} -f rules", env: env).then (p) ->
+      execFuture("#{binplz} -f rules build", env: env).then (p) ->
         p.stdout.should.match(/^hello there\n/)
 
     it "into the run function as a parameter", futureTest withTempFolder (folder) ->
       fs.writeFileSync "#{folder}/rules", SETTINGS_TEST_2
-      execFuture("#{binplz} -f rules citrus=\'hello there\'").then (p) ->
+      execFuture("#{binplz} -f rules citrus=\'hello there\' build").then (p) ->
         p.stdout.should.match(/^hello there\n/)
 
     it "nested", futureTest withTempFolder (folder) ->
       fs.writeFileSync "#{folder}/rules", SETTINGS_TEST_3
-      execFuture("#{binplz} -f rules names.commie=brown eaters.grass=cow").then (p) ->
+      execFuture("#{binplz} -f rules names.commie=brown eaters.grass=cow build").then (p) ->
         p.stdout.should.match(/^brown cow\n/)
 
     it "following precedence", futureTest withTempFolder (folder) ->
@@ -215,7 +215,7 @@ describe "plz (system binary)", ->
       fs.writeFileSync "#{folder}/plzrc", "alpha=rc\ngamma=rc\n"
       env = { "PLZRC": "#{folder}/plzrc" }
       for k, v of process.env then env[k] = v
-      execFuture("#{binplz} -f rules beta=cmd gamma=cmd", env: env).then (p) ->
+      execFuture("#{binplz} -f rules beta=cmd gamma=cmd build", env: env).then (p) ->
         p.stdout.should.match(/^alpha: rc\nbeta: cmd\ngamma: cmd\n$/)
 
   describe "can load modules", ->
@@ -225,14 +225,14 @@ describe "plz (system binary)", ->
       fs.writeFileSync "#{folder}/rules", LOAD_TEST
       env = { "PLZ_PATH": "#{folder}/hidden" }
       for k, v of process.env then env[k] = v
-      execFuture("#{binplz} -f rules", env: env).then (p) ->
+      execFuture("#{binplz} -f rules build", env: env).then (p) ->
         p.stdout.should.match(/whine.\nloaded.\n/)
 
     it "from .plz/plugins/", futureTest withTempFolder (folder) ->
       shell.mkdir "-p", "#{folder}/.plz/plugins"
       fs.writeFileSync "#{folder}/.plz/plugins/plz-whine.coffee", LOAD_TEST_WHINE
       fs.writeFileSync "#{folder}/rules", LOAD_TEST
-      execFuture("#{binplz} -f rules").then (p) ->
+      execFuture("#{binplz} -f rules build").then (p) ->
         p.stdout.should.match(/whine.\nloaded.\n/)
 
     it "from a node module", futureTest withTempFolder (folder) ->
@@ -241,21 +241,21 @@ describe "plz (system binary)", ->
       fs.writeFileSync "#{folder}/rules", LOAD_TEST
       env = { "NODE_PATH": "#{folder}/node_modules" }
       for k, v of process.env then env[k] = v
-      execFuture("#{binplz} -f rules").then (p) ->
+      execFuture("#{binplz} -f rules build").then (p) ->
         p.stdout.should.match(/whine.\nloaded.\n/)
 
     it "delayed from within a file", futureTest withTempFolder (folder) ->
       shell.mkdir "-p", "#{folder}/.plz/plugins"
       fs.writeFileSync "#{folder}/.plz/plugins/plz-whine.coffee", LOAD_TEST_DELAYED
       fs.writeFileSync "#{folder}/rules", LOAD_TEST
-      execFuture("#{binplz} -f rules").then (p) ->
+      execFuture("#{binplz} -f rules build").then (p) ->
         p.stdout.should.match(/whine.\nloaded.\n/)
 
     it "delayed from within a different file", futureTest withTempFolder (folder) ->
       shell.mkdir "-p", "#{folder}/.plz/plugins"
       fs.writeFileSync "#{folder}/.plz/plugins/plz-smile.coffee", LOAD_TEST_DELAYED_2
       fs.writeFileSync "#{folder}/rules", LOAD_TEST_2
-      execFuture("#{binplz} -f rules").then (p) ->
+      execFuture("#{binplz} -f rules build").then (p) ->
         p.stdout.should.match(/whine.\nloaded.\n/)
 
   it "loads PLZ_RULES if asked", futureTest withTempFolder (folder) ->

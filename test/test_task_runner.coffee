@@ -38,6 +38,7 @@ describe "TaskRunner", ->
     runner.enqueue "first"
     runner.enqueue "second"
     completed.should.eql []
+    runner.start()
     runner.runQueue().then ->
       completed.should.eql [ "first", "second" ]
 
@@ -56,6 +57,7 @@ describe "TaskRunner", ->
     runner.enqueue "first"
     runner.enqueue "second"
     completed.should.eql []
+    runner.start()
     runner.runQueue().then ->
       completed.should.eql [ "first1", "first2", "second", "last" ]
 
@@ -68,6 +70,7 @@ describe "TaskRunner", ->
         fs.writeFileSync "#{folder}/out.x", "hello!"
       "second": new Task "second", watch: "#{folder}/out.x", run: ->
         completed.push "second"
+    runner.start()
     runner.table.activate(persistent: false, interval: 250)
     .then ->
       runner.enqueue "first"
@@ -87,6 +90,7 @@ describe "TaskRunner", ->
         fs.writeFileSync "#{folder}/out.x", "hello!"
       "second": new Task "second", watch: "#{folder}/out.x", run: ->
         completed.push "second"
+    runner.start()
     runner.table.activate(persistent: false, interval: 250)
     .then ->
       runner.enqueue "first"
@@ -112,6 +116,7 @@ describe "TaskRunner", ->
           fs.writeFileSync "#{folder}/out.x", "first write!"
       "setup": new Task "setup", run: ->
         completed.push "setup"
+    runner.start()
     runner.table.activate(persistent: false, interval: 250)
     .then ->
       runner.enqueue "primary"
@@ -140,6 +145,7 @@ describe "TaskRunner", ->
         fs.writeFileSync "#{folder}/out.x", "build!"
       "test": new Task "test", must: "build", watch: "#{folder}/out.x", run: ->
         completed.push "test"
+    runner.start()
     runner.table.activate(persistent: false, interval: 250)
     .then ->
       runner.enqueue "build"
@@ -158,6 +164,7 @@ describe "TaskRunner", ->
       "go": new Task "go", run: (context) -> completed.push context.settings.peaches
     runner.enqueue "go"
     completed.should.eql []
+    runner.start()
     runner.runQueue().then ->
       completed.should.eql [ "10" ]
 
@@ -170,6 +177,7 @@ describe "TaskRunner", ->
     runner.enqueue "go", "file2"
     runner.enqueue "go", "file1"
     completed.should.eql []
+    runner.start()
     runner.runQueue().then ->
       completed.should.eql [ [ "file1", "file2" ] ]
 
@@ -182,5 +190,6 @@ describe "TaskRunner", ->
     runner.enqueue "helper"
     runner.enqueue "go", "file1"
     completed.should.eql []
+    runner.start()
     runner.runQueue().then ->
       completed.should.eql [ [ "file1", "file2" ] ]

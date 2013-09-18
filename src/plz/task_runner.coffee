@@ -16,11 +16,23 @@ pushUnique = (list, name, arg = []) ->
   true
 
 # handle the queue of tasks to run, and run them.
+# state:
+# - idle: ready to start again on an event
+# - running: currently processing a list of queued tasks
+# - paused: will not run the queue until un-paused
 class TaskRunner
   constructor: (@table) ->
     @queue = []
-    @state = "waiting"
+    @state = "paused"
     @settings = {}
+    # if true, trigger another loop through the queue after running.
+    @runAgain = false
+
+  start: ->
+    if @state == "paused" then @state = "idle"
+
+  pause: ->
+    if @state == "idle" then @state = "paused"
 
   # queue a task (by name). doesn't actually run the queue.
   enqueue: (name, filename = null) ->
@@ -31,9 +43,9 @@ class TaskRunner
   # 'skip' is a set of tasks that have already been run.
   runQueue: (skip = {}) ->
     # if we're in the middle of running the queue already, chillax.
-    if @state in [ "running", "run-again" ]
-      @state = "run-again"
-      return Q(null)
+    if @state in [ "running", "paused" ]
+      @runAgain = true
+      return Q(false)
     # fill in all the dependencies
     tasklist = []
     @flushQueue(tasklist, skip)
@@ -42,14 +54,15 @@ class TaskRunner
     else
       logging.debug "No tasks to run."
     @state = "running"
+    @runAgain = false
     @runTasks(tasklist).then (completed) =>
-      again = (@state == "run-again") or (@queue.length > 0)
-      @state = "waiting"
+      again = @runAgain or (@queue.length > 0)
+      @state = "idle"
       if again
         for name, v of completed then skip[name] = true
         @runQueue(skip)
       else
-        Q(null)
+        Q(true)
 
   # flush the queued tasks (and their dependencies) into a given task list.
   flushQueue: (tasklist = [], skip = {}) ->

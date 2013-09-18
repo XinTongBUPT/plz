@@ -87,8 +87,8 @@ class TaskTable
     for name in @getNames() then process(@tasks[name], "attach")
 
   runQueue: ->
-    @runner.runQueue().then =>
-      statefile.saveState(@snapshotWatches())
+    @runner.runQueue().then (actuallyRan) =>
+      if actuallyRan then statefile.saveState(@snapshotWatches()) else Q(null)
 
   # turn on all the watches.
   # options: { persistent, debounceInterval, interval, snapshots }
@@ -115,8 +115,9 @@ class TaskTable
     if snapshots? then options.snapshot = snapshots[watch.join("\n")] or {}
     watcher = globwatcher.globwatcher(watch, options)
     handler = (filename) =>
+      logging.debug "File changed: #{filename} detected by #{util.inspect(watch)}"
       if @runner.enqueue(name, filename)
-        logging.taskinfo "--- File change triggered: #{name} on #{util.inspect(watch)} by #{filename}"
+        logging.taskinfo "--- File change triggered: #{name}"
         @runQueue()
     watcher.on "added", handler
     watcher.on "changed", handler
@@ -130,7 +131,9 @@ class TaskTable
   # check any watched files, proactively.
   # returns a promise that will be fulfilled when the checks are done.
   checkWatches: ->
-    Q.all(for w in @allWatchers() then w.check())
+    logging.debug "Check watches..."
+    Q.all(for w in @allWatchers() then w.check()).then ->
+      logging.debug "...done checking watches."
 
   # return a union of the saved states of any watchers
   snapshotWatches: ->
