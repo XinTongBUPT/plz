@@ -24,7 +24,7 @@
   "dependencies": {
     "coffee-script": "*",
     "glob": "*",
-    "globwatcher": "*",
+    "globwatcher": ">= 1.2.1",
     "nopt": "*",
     "q": "*",
     "shelljs": "*",
