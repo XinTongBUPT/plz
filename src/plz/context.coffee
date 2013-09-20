@@ -59,7 +59,7 @@ defaultGlobals =
   process: process
   Buffer: Buffer
   Q: Q
-  glob: (pattern, options) ->
+  glob: (pattern, options = {}) ->
     deferred = Q.defer()
     glob pattern, options, (error, files) ->
       if error? then deferred.reject(error) else deferred.resolve(files)
