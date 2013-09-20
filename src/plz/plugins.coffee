@@ -61,6 +61,7 @@ eval$ = (code, options={}) ->
   isCoffee = (code.indexOf("->") >= 0) or (code.indexOf("{") < 0)
   if isCoffee
     code = try
+      logging.debug "Compiling rules from coffee-script"
       coffee.compile(code, bare: true)
     catch e
       # might not be coffee-script. try js.
