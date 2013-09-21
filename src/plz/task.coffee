@@ -13,6 +13,7 @@ TASK_REGEX = /^[a-z][-a-z0-9_]*$/
 #   must: [ "task", "task" ]  # run these dependent tasks first, always
 #   watch: [ "file-glob" ]    # run this task when any of these files change
 #   watchall: [ "file-glob" ] # run this task when any of these files change or are deleted
+#   always: true    # run this task always
 #   run: (options) -> ...     # code to run when executing
 
 class Task
@@ -31,6 +32,7 @@ class Task
     @before = options.before?.toString()
     @after = options.after?.toString()
     @attach = options.attach?.toString()
+    @always = options.always or false
     @watch = options.watch
     if typeof @watch == "string" then @watch = [ @watch ]
     @watchall = options.watchall

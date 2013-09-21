@@ -86,6 +86,10 @@ class TaskTable
     for name in @getNames() then process(@tasks[name], "attach")
     for name in @getNames() then process(@tasks[name], "after")
 
+  # enqueue tasks that should always run (at startup)
+  enqueueAlways: ->
+    for task in @allTasks() then if task.always then @runner.enqueue(task.name)
+
   runQueue: ->
     @runner.runQueue().then (actuallyRan) =>
       if actuallyRan then statefile.saveState(@snapshotWatches()) else Q(null)

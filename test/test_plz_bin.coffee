@@ -185,6 +185,11 @@ describe "plz (system binary)", ->
     execFuture("#{binplz} -f rules start").then (p) ->
       p.stdout.should.match(/start\ncontinue\n/)
 
+  it "enqueues 'always' tasks", futureTest withTempFolder (folder) ->
+    fs.writeFileSync "#{folder}/rules", ALWAYS_TEST
+    execFuture("#{binplz} -f rules start").then (p) ->
+      p.stdout.should.match(/always\nstart\n/)
+
   describe "can deliver settings to a task", ->
     it "from the command line", futureTest withTempFolder (folder) ->
       fs.writeFileSync "#{folder}/rules", SETTINGS_TEST_1
@@ -379,6 +384,12 @@ task "start", run: ->
 
 task "continue", run: ->
   echo "continue"
+"""
+
+ALWAYS_TEST = """
+task "start", run: -> echo "start"
+task "notme", run: -> echo "not me"
+task "always", always: true, run: -> echo "always"
 """
 
 SETTINGS_TEST_1 = """

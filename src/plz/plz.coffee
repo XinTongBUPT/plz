@@ -103,6 +103,7 @@ runWithTable = (options, settings, table, startTime) ->
     logging.debug "Activating watches..."
     table.activate(persistent: options.watch, interval: 250, snapshots: snapshots)
   .then ->
+    table.enqueueAlways()
     for name in options.tasklist then table.runner.enqueue(name)
     table.runner.start()
     table.runQueue()

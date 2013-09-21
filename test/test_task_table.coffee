@@ -143,6 +143,14 @@ describe "TaskTable", ->
       a.run(options).then ->
         options.order.should.eql [ "a", "b", "c" ]
 
+  it "enqueues 'always' tasks", ->
+    table = new TaskTable()
+    table.tasks =
+      "a": new Task("a")
+      "b": new Task("b", always: true)
+    table.enqueueAlways()
+    table.runner.queue.map((x) -> x[0]).should.eql [ "b" ]    
+
   describe "topologically sorts tasks", ->
     table = new TaskTable()
     table.tasks =
