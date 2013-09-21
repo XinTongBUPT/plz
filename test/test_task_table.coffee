@@ -128,6 +128,21 @@ describe "TaskTable", ->
         a.run(options).then ->
           options.should.eql(x: 20)
 
+    it "attach before after", futureTest ->
+      table = new TaskTable()
+      table.tasks =
+        "a": new Task("a", run: (options) -> options.order.push "a")
+        "b": new Task("b", attach: "a", run: (options) -> options.order.push "b")
+        "c": new Task("c", after: "a", run: (options) -> options.order.push "c")
+      table.validate()
+      table.consolidate()
+      table.getNames().should.eql [ "a" ]
+      a = table.getTask("a")
+      a.covered.sort().should.eql [ "a", "b", "c" ]
+      options = { order: [] }
+      a.run(options).then ->
+        options.order.should.eql [ "a", "b", "c" ]
+
   describe "topologically sorts tasks", ->
     table = new TaskTable()
     table.tasks =

@@ -83,8 +83,8 @@ class TaskTable
         @tasks[oldtask.name] = newtask
         delete @tasks[name]
     for name in @getNames() then process(@tasks[name], "before")
-    for name in @getNames() then process(@tasks[name], "after")
     for name in @getNames() then process(@tasks[name], "attach")
+    for name in @getNames() then process(@tasks[name], "after")
 
   runQueue: ->
     @runner.runQueue().then (actuallyRan) =>
