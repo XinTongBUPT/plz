@@ -23,7 +23,7 @@ cloneOptions = (options) ->
 #   watch: [ "file-glob" ]    # run this task when any of these files change
 #   watchall: [ "file-glob" ] # run this task when any of these files change or are deleted
 #   always: true    # run this task always
-#   run: (options) -> ...     # code to run when executing
+#   run: (context) -> ...     # code to run when executing
 
 class Task
   constructor: (@name, options={}) ->
