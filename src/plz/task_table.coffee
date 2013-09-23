@@ -2,11 +2,16 @@ Q = require 'q'
 simplesets = require 'simplesets'
 util = require 'util'
 
+config = require("./config")
 logging = require("./logging")
 statefile = require("./statefile")
-Task = require("./task").Task
-TaskRunner = require("./task_runner").TaskRunner
+task = require("./task")
+task_runner = require("./task_runner")
+
+Config = config.Config
 Set = simplesets.Set
+Task = task.Task
+TaskRunner = task_runner.TaskRunner
 
 # how long to wait to run a job after it is triggered (msec)
 QUEUE_DELAY = 100
@@ -100,7 +105,7 @@ class TaskTable
         throw error
 
   saveState: (completedCount, incomplete) ->
-    if completedCount? and completedCount > 0
+    if Config.monitor() and completedCount? and completedCount > 0
       state =
         version: 1
         snapshots: @snapshotWatches()
@@ -114,6 +119,7 @@ class TaskTable
     Q.all(
       for task in @allTasks() then do (task) =>
         handler = (filename, watch) =>
+          return unless Config.monitor()
           logging.debug "File changed: #{filename} detected by #{util.inspect(watch)}"
           if @runner.enqueue(task.name, filename)
             logging.taskinfo "--- File change triggered: #{task.name}"

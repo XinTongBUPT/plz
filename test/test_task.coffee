@@ -12,6 +12,7 @@ task = require("../lib/plz/task")
 
 test_util = require("./test_util")
 futureTest = test_util.futureTest
+withTempFolder = test_util.withTempFolder
 
 describe "Task", ->
   it "is restrictive about names", ->
@@ -58,3 +59,16 @@ describe "Task", ->
       run: (options) -> options.z = options.x
     t3 = t1.combine(t2, t2)
     t3.must.should.eql [ "oranges", "apples" ]
+
+  it "activates watches", futureTest withTempFolder (folder) ->
+    fs.writeFileSync "#{folder}/file1.x", "hello"
+    fs.writeFileSync "#{folder}/file2.y", "hello"
+    t = new task.Task "build", watch: "#{folder}/*.x", run: -> 3
+    t.activateWatches({}, {}, (->)).then ->
+      try
+        t.watchers.length.should.eql 1
+        t.watchers[0].originalPatterns.should.eql [ "#{folder}/*.x" ]
+        t.currentSet().should.eql [ "#{folder}/file1.x" ]
+      finally
+        t.watchers.map (w) -> w.close()
+

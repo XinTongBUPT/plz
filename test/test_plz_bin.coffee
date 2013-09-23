@@ -161,10 +161,10 @@ describe "plz (system binary)", ->
       shell.mkdir "-p", "#{folder}/stuff"
       fs.writeFileSync "#{folder}/rules", RUN_TEST_4.replace(/%STUFF%/g, "#{folder}/stuff").replace(/%FOLDER%/g, "#{folder}")
       fs.writeFileSync "#{folder}/stuff/exists.x", "exists"
-      execFuture("#{binplz} -x -f rules").then (p) ->
+      execFuture("#{binplz} -f rules").then (p) ->
         p.stdout.replace(re, "%STUFF%").should.match(/changed: %STUFF%\/exists.x\n/)
         fs.writeFileSync "#{folder}/stuff/exists2.x", "exists"
-        execFuture("#{binplz} -x -f rules")
+        execFuture("#{binplz} -f rules")
       .then (p) ->
         p.stdout.replace(re, "%STUFF%").should.match(/%STUFF%\/exists2.x\n/)
 
@@ -174,8 +174,14 @@ describe "plz (system binary)", ->
       fs.writeFileSync "#{folder}/stuff/exists.x", "exists"
       env = { "PLZ_STATE": "#{folder}/kitten" }
       for k, v of process.env then env[k] = v
-      execFuture("#{binplz} -D -x -f rules", env: env).then (p) ->
+      execFuture("#{binplz} -f rules", env: env).then (p) ->
         fs.readFileSync("#{folder}/kitten").toString().should.match /stuff\/exists.x/
+
+  it "can turn off monitoring watches", futureTest withTempFolder (folder) ->
+    fs.writeFileSync "#{folder}/rules", MONITOR_OFF_TEST.replace(/%FOLDER%/g, "#{folder}")
+    execFuture("#{binplz} -f rules stop").then (p) ->
+      p.stdout.should.not.match(/changed:/)
+      fs.existsSync("#{folder}/.plz/state").should.eql false
 
   it "can get and set configs", futureTest withTempFolder (folder) ->
     fs.writeFileSync "#{folder}/rules", CONFIG_TEST
@@ -366,6 +372,15 @@ task "watch", watch: "%STUFF%/*.x", run: (context) ->
 
 task "end", watch: "%FOLDER%/die.x", run: ->
   process.exit 0
+"""
+
+MONITOR_OFF_TEST = """
+task "stop", run: (context) ->
+  plz.monitor(false)
+  require("fs").writeFileSync "%FOLDER%/hello.x", "hello!"
+
+task "watch", watch: "%FOLDER%/*.x", run: (context) ->
+  notice "changed: \#{context.filenames.join(', ')}"
 """
 
 CONFIG_TEST = """

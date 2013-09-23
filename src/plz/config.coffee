@@ -20,7 +20,11 @@ Config =
   stateFile: (filename) ->
     if filename? then @_stateFile = filename
     @_stateFile
-    
+  
+  monitor: (value) ->
+    if value? then @_monitor = value
+    @_monitor
+
   version: ->
     VERSION
 
@@ -28,7 +32,10 @@ Config =
   reset: ->
     @_rulesFile = null
     @_stateFile = null
+    @_monitor = true
 
+
+Config.reset()
 
 exports.Config = Config
 exports.VERSION = VERSION
