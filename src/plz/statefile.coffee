@@ -1,12 +1,13 @@
 fs = require 'fs'
 path = require 'path'
 Q = require 'q'
+shelljs = require 'shelljs'
 util = require 'util'
 
 Config = require("./config").Config
 logging = require("./logging")
 
-DEFAULT_FILENAME = ".plzstate"
+DEFAULT_FILENAME = ".plz/state"
 
 findStateFile = ->
   # the state file should (normally) be kept in the same folder as the rules file.
@@ -35,7 +36,7 @@ loadState = ->
 saveState = (state) ->
   findStateFile()
   logging.debug "Saving state file #{Config.stateFile()}"
-  if not fs.existsSync(path.dirname(Config.stateFile())) then console.log "WELP"
+  shelljs.mkdir "-p", path.dirname(Config.stateFile())
   deferred = Q.defer()
   fs.writeFile Config.stateFile(), JSON.stringify(state), (error) ->
     if error?
