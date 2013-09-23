@@ -43,8 +43,6 @@ main = ->
     # allow settings.options to take effect, then allow argv to override them.
     if settings.options? then parseOptions(settings.options.split(" "), 0)
     options = parseOptions(process.argv)
-    # voodoo that might make Q faster
-    if not options.debug then Q.longStackJumpLimit = 0
     run(options, settings)
   .fail (error) ->
     logging.error error.message
