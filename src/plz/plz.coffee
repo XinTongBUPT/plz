@@ -97,12 +97,13 @@ runWithTable = (options, settings, table, startTime) ->
   for name in options.tasklist
     if not table.getTask(name)? then throw new Error("No task named '#{name}'")
   statefile.loadState()
-  .then (snapshots) ->
-    logging.debug "Activating watches..."
-    table.activate(persistent: options.watch, interval: 250, snapshots: snapshots)
-  .then ->
+  .then (state) ->
+    if (not state?.version?) or (state.version > 1) then state = { snapshots: { } }
     table.enqueueAlways()
     for name in options.tasklist then table.runner.enqueue(name)
+    logging.debug "Activating watches..."
+    table.activate(state.snapshots, persistent: options.watch, interval: 250)
+  .then ->
     table.runner.start()
     table.runQueue()
   .then ->

@@ -1,11 +1,12 @@
-globwatcher = require 'globwatcher'
 Q = require 'q'
+simplesets = require 'simplesets'
 util = require 'util'
 
 logging = require("./logging")
 statefile = require("./statefile")
 Task = require("./task").Task
 TaskRunner = require("./task_runner").TaskRunner
+Set = simplesets.Set
 
 # how long to wait to run a job after it is triggered (msec)
 QUEUE_DELAY = 100
@@ -91,42 +92,34 @@ class TaskTable
     for task in @allTasks() then if task.always then @runner.enqueue(task.name)
 
   runQueue: ->
-    @runner.runQueue().then (actuallyRan) =>
-      if actuallyRan then statefile.saveState(@snapshotWatches()) else Q(null)
+    @runner.runQueue()
+    .then (completed) =>
+      @saveState(completed?.size(), [])
+    .fail (error) =>
+      @saveState(error.plz?.completed?.size(), error.plz?.tasklist) ->
+        throw error
+
+  saveState: (completedCount, incomplete) ->
+    if completedCount? and completedCount > 0
+      state =
+        version: 1
+        snapshots: @snapshotWatches()
+        incomplete: incomplete or []
+      statefile.saveState(state)
+    else
+      Q(null)
 
   # turn on all the watches.
-  # options: { persistent, debounceInterval, interval, snapshots }
-  activate: (options) ->
-    snapshots = options.snapshots
-    delete options.snapshots
-    options.debug = (text) -> logging.debug "watch: #{text}"
-    promises = []
-    for task in @allTasks() then do (task) =>
-      task.watchers = []
-      if task.watch?
-        watcher = @activateWatch(task.watch, snapshots, options, task.name, false)
-        promises.push watcher.ready
-        task.watchers.push watcher
-      if task.watchall?
-        watcher = @activateWatch(task.watchall, snapshots, options, task.name, true)
-        promises.push watcher.ready
-        task.watchers.push watcher
-    Q.all(promises)
-
-  activateWatch: (watch, snapshots, optionsIn, name, alsoDeletes) ->
-    options = {}
-    for k, v of optionsIn then options[k] = v
-    if snapshots? then options.snapshot = snapshots[watch.join("\n")] or {}
-    watcher = globwatcher.globwatcher(watch, options)
-    handler = (filename) =>
-      logging.debug "File changed: #{filename} detected by #{util.inspect(watch)}"
-      if @runner.enqueue(name, filename)
-        logging.taskinfo "--- File change triggered: #{name}"
-        @runQueue()
-    watcher.on "added", handler
-    watcher.on "changed", handler
-    if alsoDeletes then watcher.on "deleted", handler
-    watcher
+  activate: (snapshots, options) ->
+    Q.all(
+      for task in @allTasks() then do (task) =>
+        handler = (filename, watch) =>
+          logging.debug "File changed: #{filename} detected by #{util.inspect(watch)}"
+          if @runner.enqueue(task.name, filename)
+            logging.taskinfo "--- File change triggered: #{task.name}"
+            @runQueue()
+        task.activateWatches(options, snapshots, handler)
+    )
 
   # turn off all watches
   close: ->
@@ -149,7 +142,7 @@ class TaskTable
 
   # return a list of task names, sorted by dependency order, needed for this task.
   # 'skip' is a list of dependencies to skip.
-  topoSort: (name, skip = {}) ->
+  topoSort: (name, skip = new Set()) ->
     rv = []
     # make a copy of 'graph' so we don't destroy it. it's mutable in JS.
     tasks = {}
@@ -157,7 +150,7 @@ class TaskTable
     visit = (name) ->
       deps = (tasks[name]?.must or [])
       delete tasks[name]
-      for t in deps then if (not skip[t]?) and tasks[t]? then visit(t)
+      for t in deps then if (not skip.has(t)) and tasks[t]? then visit(t)
       rv.push name
     visit(name)
     rv

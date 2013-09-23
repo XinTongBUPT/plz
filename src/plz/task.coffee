@@ -1,9 +1,18 @@
+globwatcher = require 'globwatcher'
 Q = require 'q'
+simplesets = require 'simplesets'
 util = require 'util'
 
 logging = require "./logging"
 
+Set = simplesets.Set
+
 TASK_REGEX = /^[a-z][-a-z0-9_]*$/
+
+cloneOptions = (options) ->
+  rv = {}
+  for k, v of options then rv[k] = v
+  rv
 
 # task "name",
 #   description: "displayed in help"
@@ -62,6 +71,30 @@ class Task
     for c in @covered.concat(task.covered)
       if t.covered.indexOf(c) < 0 then t.covered.push c
     t
+
+  # turn on watches, if present.
+  # options: { persistent, debounceInterval, interval }
+  activateWatches: (optionsIn, snapshots, handler) ->
+    @watchers = []
+    for item in [ [ @watch, false ], [ @watchall, true ] ]
+      [ w, alsoDeletes ] = item
+      if w? then do (w) =>
+        options = cloneOptions(optionsIn)
+        options.snapshot = snapshots[w.join("\n")] or {}
+        options.debug = (text) => logging.debug "watch (#{@name}): #{text}"
+        watcher = globwatcher.globwatcher(w, options)
+        h = (filename) -> handler(filename, w)
+        watcher.on "added", h
+        watcher.on "changed", h
+        if alsoDeletes then watcher.on "deleted", h
+        @watchers.push watcher
+    Q.all(for w in @watchers then w.ready)
+
+  # collect currentSet() for all watchers
+  currentSet: ->
+    rv = new Set()
+    for w in (@watchers or []) then rv = rv.union(new Set(w.currentSet()))
+    rv.array()
 
   toDebug: ->
     "#{@name}: must=#{util.inspect(@must)} description=#{util.inspect(@description)} watch=#{@watch} watchall=#{@watchall} before=#{@before} after=#{@after} attach=#{@attach}"

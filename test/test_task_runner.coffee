@@ -172,7 +172,7 @@ describe "TaskRunner", ->
     completed = []
     runner = new TaskTable().runner
     runner.table.tasks =
-      "go": new Task "go", run: (context) -> completed.push context.changed_files
+      "go": new Task "go", run: (context) -> completed.push context.filenames
     runner.enqueue "go", "file1"
     runner.enqueue "go", "file2"
     runner.enqueue "go", "file1"
@@ -186,7 +186,7 @@ describe "TaskRunner", ->
     runner = new TaskTable().runner
     runner.table.tasks =
       "helper": new Task "helper", run: (context) -> runner.enqueue "go", "file2"
-      "go": new Task "go", run: (context) -> completed.push context.changed_files
+      "go": new Task "go", run: (context) -> completed.push context.filenames
     runner.enqueue "helper"
     runner.enqueue "go", "file1"
     completed.should.eql []

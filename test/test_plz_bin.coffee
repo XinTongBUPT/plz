@@ -134,8 +134,8 @@ describe "plz (system binary)", ->
       shell.mkdir "-p", "#{folder}/stuff"
       fs.writeFileSync "#{folder}/rules", RUN_TEST_3.replace(/%STUFF%/g, "#{folder}/stuff").replace(/%FOLDER%/g, "#{folder}")
       fs.writeFileSync "#{folder}/stuff/exists.x", "exists"
-      f1 = execFuture("#{binplz} -w -f rules build").then (p) ->
-        p.stdout.should.match(/hi.\nall watch\n/)
+      f1 = execFuture("#{binplz} -w -f rules").then (p) ->
+        p.stdout.should.match(/normal watch\nall watch\nall watch\n/)
       f2 = Q.delay(500).then ->
         fs.unlinkSync "#{folder}/stuff/exists.x"
       f3 = Q.delay(2000).then ->
@@ -143,11 +143,12 @@ describe "plz (system binary)", ->
       Q.all([ f1, f2, f3 ])
 
     it "and reports their names", futureTest withTempFolder (folder) ->
+      re = new RegExp("#{folder}/stuff", "g")
       shell.mkdir "-p", "#{folder}/stuff"
       fs.writeFileSync "#{folder}/rules", RUN_TEST_4.replace(/%STUFF%/g, "#{folder}/stuff").replace(/%FOLDER%/g, "#{folder}")
       fs.writeFileSync "#{folder}/stuff/exists.x", "exists"
       f1 = execFuture("#{binplz} -w -f rules build").then (p) ->
-        p.stdout.replace(new RegExp("#{folder}/stuff", "g"), "%STUFF%").should.match(/hi.\nchanged: %STUFF%\/new.x\ncurrent: %STUFF%\/exists.x, %STUFF%\/new.x\n/)
+        p.stdout.replace(re, "%STUFF%").should.match(/hi.\nchanged: %STUFF%\/exists.x\nchanged: %STUFF%\/new.x\n/)
       f2 = Q.delay(500).then ->
         fs.writeFileSync "#{folder}/stuff/new.x", "new"
       f3 = Q.delay(2000).then ->
@@ -156,15 +157,16 @@ describe "plz (system binary)", ->
 
   describe "keeps state on watchers", ->
     it "across executions", futureTest withTempFolder (folder) ->
+      re = new RegExp("#{folder}/stuff", "g")
       shell.mkdir "-p", "#{folder}/stuff"
       fs.writeFileSync "#{folder}/rules", RUN_TEST_4.replace(/%STUFF%/g, "#{folder}/stuff").replace(/%FOLDER%/g, "#{folder}")
       fs.writeFileSync "#{folder}/stuff/exists.x", "exists"
       execFuture("#{binplz} -x -f rules").then (p) ->
-        p.stdout.should.match(/changed: (\S+)\/stuff\/exists.x\n/)
+        p.stdout.replace(re, "%STUFF%").should.match(/changed: %STUFF%\/exists.x\n/)
         fs.writeFileSync "#{folder}/stuff/exists2.x", "exists"
         execFuture("#{binplz} -x -f rules")
       .then (p) ->
-        p.stdout.should.match(/changed: (\S+)\/stuff\/exists2.x\n/)
+        p.stdout.replace(re, "%STUFF%").should.match(/%STUFF%\/exists2.x\n/)
 
     it "in an odd place via PLZ_STATE", futureTest withTempFolder (folder) ->
       shell.mkdir "-p", "#{folder}/stuff"
@@ -360,8 +362,7 @@ RUN_TEST_4 = """
 task "build", run: -> notice "hi."
 
 task "watch", watch: "%STUFF%/*.x", run: (context) ->
-  notice "changed: \#{context.changed_files.join(', ')}"
-  notice "current: \#{context.current_files.join(', ')}"
+  notice "changed: \#{context.filenames.join(', ')}"
 
 task "end", watch: "%FOLDER%/die.x", run: ->
   process.exit 0

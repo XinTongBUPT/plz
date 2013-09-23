@@ -1,7 +1,9 @@
 Q = require 'q'
+simplesets = require 'simplesets'
 util = require 'util'
 
 logging = require("./logging")
+Set = simplesets.Set
 
 # add a (name, arg) to a list.
 # if 'name' is not in the list, [ name, [ arg ] ] is added to the end.
@@ -41,11 +43,11 @@ class TaskRunner
   # run all queued tasks, and their depedencies. 
   # returns a promise that will resolve when all the tasks have run.
   # 'skip' is a set of tasks that have already been run.
-  runQueue: (skip = {}) ->
+  runQueue: (skip = new Set()) ->
     # if we're in the middle of running the queue already, chillax.
     if @state in [ "running", "paused" ]
       @runAgain = true
-      return Q(false)
+      return Q(skip)
     # fill in all the dependencies
     tasklist = []
     @flushQueue(tasklist, skip)
@@ -55,17 +57,21 @@ class TaskRunner
       logging.debug "No tasks to run."
     @state = "running"
     @runAgain = false
-    @runTasks(tasklist).then (completed) =>
+    @runTasks(tasklist)
+    .then (completed) =>
+      skip = completed.union(skip)
       again = @runAgain or (@queue.length > 0)
       @state = "idle"
       if again
-        for name, v of completed then skip[name] = true
         @runQueue(skip)
       else
-        Q(true)
+        Q(skip)
+    .fail (error) ->
+      error.plz.completed = error.plz.completed.union(skip)
+      throw error
 
   # flush the queued tasks (and their dependencies) into a given task list.
-  flushQueue: (tasklist = [], skip = {}) ->
+  flushQueue: (tasklist = [], skip = new Set()) ->
     for [ name, filenames ] in @queue
       for t in @table.topoSort(name, skip)
         if t == name
@@ -76,32 +82,38 @@ class TaskRunner
     tasklist
 
   # loop through a tasklist, running one at a time, skipping dupes.
-  runTasks: (tasklist, completed = {}) ->
+  runTasks: (tasklist, completed = new Set()) ->
     if tasklist.length == 0 then return Q(completed)
     [ name, filenames ] = tasklist.shift()
-    if completed[name]?
+    if completed.has(name)
       @runTasks(tasklist, completed)
     else
-      @runTask(name, filenames, completed).then =>
+      @runTask(name, filenames, completed)
+      .then =>
         # remove anything from the queue that's already in the current tasklist.
         @queue = @queue.filter ([ name, filenames ]) ->
-          for [ tasklist_name, tasklist_filenames ] in tasklist
-            if name == tasklist_name
-              for f in filenames then if tasklist_filenames.indexOf(f) < 0 then tasklist_filenames.push(f)
+          for [ tasklistName, tasklistFilenames ] in tasklist
+            if name == tasklistName
+              for f in filenames then if tasklistFilenames.indexOf(f) < 0 then tasklistFilenames.push(f)
               return false
           true
         @runTasks(tasklist, completed)
+      .fail (error) ->
+        error.plz.tasklist = tasklist
+        error.plz.completed = completed
+        throw error
 
   # run one task, then check for watch triggers
-  runTask: (name, filenames, completed = {}) ->
-    completed[name] = true
-    context = { settings: @settings }
-    if filenames.length > 0 then context.changed_files = filenames
+  runTask: (name, filenames, completed = new Set()) ->
+    completed.add(name)
     task = @table.getTask(name)
-    for w in (task.watchers or []) then context.current_files = (context.current_files or []).concat(w.currentSet())
+    context = 
+      settings: @settings
+      filenames: if filenames.length > 0 then filenames else task.currentSet()
     task.run(context)
     .fail (error) ->
       error.message = "Task '#{name}' failed: #{error.message}"
+      error.plz = { task: name }
       throw error
     .then =>
       @table.checkWatches()

@@ -3,12 +3,14 @@ minimatch = require 'minimatch'
 path = require 'path'
 Q = require 'q'
 shell = require 'shelljs'
+simplesets = require 'simplesets'
 should = require 'should'
 touch = require 'touch'
 util = require 'util'
 
 logging = require("../lib/plz/logging")
 
+Set = simplesets.Set
 Task = require("../lib/plz/task").Task
 TaskTable = require("../lib/plz/task_table").TaskTable
 
@@ -164,4 +166,4 @@ describe "TaskTable", ->
       table.topoSort("top").should.eql([ "base", "left2", "left1", "right", "top" ])
 
     it "with skips", ->
-      table.topoSort("top", left1: true).should.eql([ "base", "right", "top" ])
+      table.topoSort("top", new Set([ "left1" ])).should.eql([ "base", "right", "top" ])
