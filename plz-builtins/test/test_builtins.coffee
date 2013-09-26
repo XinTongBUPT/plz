@@ -2,9 +2,16 @@ coffee = require 'coffee-script'
 fs = require 'fs'
 path = require 'path'
 Q = require 'q'
+shell = require 'shelljs'
 should = require 'should'
 util = require 'util'
 vm = require 'vm'
+
+test_util = require("../../test/test_util")
+futureTest = test_util.futureTest
+withTempFolder = test_util.withTempFolder
+
+BUILTINS = fs.readFileSync("./lib/plz-builtins.js").toString()
 
 makeGlobals = ->
   tasks = {}
@@ -14,9 +21,13 @@ makeGlobals = ->
       for k, v of map2 then map1[k] = v
       map1
     plugins: {}
+    plz:
+      monitor: ->
+      stateFile: ->
     Q: Q
     require: (name) ->
       if name == "util" then util
+    rm: shell.rm
     settings: {}
     tasks: tasks
     task: (name, options) -> tasks[name] = options
@@ -24,20 +35,8 @@ makeGlobals = ->
 
 loadBuiltins = (globals) ->
   context = vm.createContext(globals)
-  code = fs.readFileSync("./lib/plz-builtins.js").toString()
   Q().then ->
-    vm.runInContext(code, context)
-
-# run a test as a future, and call mocha's 'done' method at the end of the chain.
-futureTest = (f) ->
-  (done) ->
-    f().then((-> done()), ((error) -> done(error)))
-
-
-# test_util = require("./test_util")
-# futureTest = test_util.futureTest
-# withTempFolder = test_util.withTempFolder
-# execFuture = test_util.execFuture
+    vm.runInContext(BUILTINS, context)
 
 
 describe "plz-builtins", ->
@@ -45,7 +44,6 @@ describe "plz-builtins", ->
     it "not defined without settings", futureTest ->
       g = makeGlobals()
       loadBuiltins(g).then ->
-        console.log "TEST"
         Object.keys(g.tasks).length.should.eql(0)
 
     it "can define only clean", futureTest ->
@@ -60,3 +58,15 @@ describe "plz-builtins", ->
       g.settings.distclean = "foo"
       loadBuiltins(g).then ->
         Object.keys(g.tasks).sort().should.eql [ "clean", "distclean" ]
+
+    it "actually erases files", futureTest withTempFolder (folder) ->
+      g = makeGlobals()
+      g.settings.clean = [ "#{folder}/trash.x" ]
+      loadBuiltins(g).then ->
+        fs.writeFileSync("#{folder}/alive.x", "alive!")
+        fs.writeFileSync("#{folder}/trash.x", "trash!")
+        Q(g.tasks.clean.run())
+      .then ->
+        fs.existsSync("#{folder}/alive.x").should.eql(true)
+        fs.existsSync("#{folder}/trash.x").should.eql(false)
+

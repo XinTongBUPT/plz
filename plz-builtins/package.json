@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "mocha": "*",
+    "shelljs": "*",
     "should": "*"
   },
   "main": "./lib/plz-builtins",
