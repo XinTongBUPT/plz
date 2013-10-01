@@ -254,7 +254,7 @@ describe "plz (system binary)", ->
       fs.writeFileSync "#{folder}/rules", LOAD_TEST
       env = { "NODE_PATH": "#{folder}/node_modules" }
       for k, v of process.env then env[k] = v
-      execFuture("#{binplz} -f rules build").then (p) ->
+      execFuture("#{binplz} -f rules build", env: env).then (p) ->
         p.stdout.should.match(/whine.\nloaded.\n/)
 
     it "delayed from within a file", futureTest withTempFolder (folder) ->
