@@ -1,3 +1,4 @@
+path = require 'path'
 util = require 'util'
 
 # default tasks for cleaning

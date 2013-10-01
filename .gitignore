@@ -3,3 +3,5 @@
 /plz.sublime-workspace
 /.DS_Store
 /node_modules/
+/plz-builtins/lib/
+/plz-builtins/node_modules/

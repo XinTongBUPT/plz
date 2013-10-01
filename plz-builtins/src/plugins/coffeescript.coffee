@@ -5,6 +5,8 @@
 # - project.type = "coffee"
 #
 
+util = require 'util'
+
 extend settings,
   coffee:
     bin: "./node_modules/coffee-script/bin/coffee"
