@@ -77,19 +77,20 @@ defaultGlobals =
     touch.sync(args...)
   exec: exec
   plz: Config
-  load: plugins.load
   plugins: plugins.plugins
   extend: (map1, map2) ->
     for k, v of map2 then map1[k] = v
     map1
 
-makeContext = (filename, table) ->
+makeContext = (table) ->
   globals = {}
   for k, v of defaultGlobals then globals[k] = v
   for command in ShellCommands then do (command) ->
     globals[command] = (args...) ->
       logging.info "+ #{command} #{trace(args)}"
       shell[command](args...)
+
+  globals.load = (name) -> plugins.load(name, globals._require)
 
   # define new task
   globals.task = (name, options) ->
@@ -106,6 +107,7 @@ makeContext = (filename, table) ->
     name: path.basename(process.cwd())
     type: "basic"
 
-  plugins.createContext(filename, globals)
+  globals
+
 
 exports.makeContext = makeContext
