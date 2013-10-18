@@ -38,7 +38,7 @@ class TaskRunner
 
   # queue a task (by name). doesn't actually run the queue.
   enqueue: (name, filename = null) ->
-    pushUnique @queue, name, (if filename? then [filename] else [])
+    pushUnique @queue, name, (if filename? then (if Array.isArray(filename) then filename else [filename]) else [])
 
   # run all queued tasks, and their depedencies. 
   # returns a promise that will resolve when all the tasks have run.
@@ -99,8 +99,9 @@ class TaskRunner
           true
         @runTasks(tasklist, completed)
       .fail (error) ->
-        error.plz.tasklist = tasklist
-        error.plz.completed = completed
+        if not error.plz.tasklist?
+          error.plz.tasklist = [ [ name, filenames ] ].concat(tasklist)
+          error.plz.completed = completed
         throw error
 
   # run one task, then check for watch triggers

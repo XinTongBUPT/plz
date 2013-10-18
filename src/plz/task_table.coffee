@@ -101,8 +101,7 @@ class TaskTable
     .then (completed) =>
       @saveState(completed?.size(), [])
     .fail (error) =>
-      @saveState(error.plz?.completed?.size(), error.plz?.tasklist) ->
-        throw error
+      @saveState(error.plz?.completed?.size(), error.plz?.tasklist).then -> throw error
 
   saveState: (completedCount, incomplete) ->
     if Config.monitor() and completedCount? and completedCount > 0
