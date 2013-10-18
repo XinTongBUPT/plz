@@ -22,7 +22,7 @@ plugins.coffee = ->
     attach: "build",
     description: "compile coffee-script source",
     watch: [ "#{settings.coffee.source}/**/*.coffee" ],
-    run: ->
+    run: (context) ->
       mkdir "-p", settings.coffee.target
       exec "#{settings.coffee.bin} -o #{settings.coffee.target} -c #{settings.coffee.source} #{settings.coffee.options.join(' ')}"
 

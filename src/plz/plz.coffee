@@ -100,6 +100,7 @@ runWithTable = (options, settings, table, startTime) ->
   .then (state) ->
     if (not state?.version?) or (state.version > 1) then state = { snapshots: { } }
     table.enqueueAlways()
+    for [ name, filenames ] in (state.incomplete or []) then if table.getTask(name)? then table.runner.enqueue(name, filenames)
     for name in options.tasklist then table.runner.enqueue(name)
     logging.debug "Activating watches..."
     table.activate(state.snapshots, persistent: options.watch, interval: 250)
