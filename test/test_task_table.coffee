@@ -167,3 +167,27 @@ describe "TaskTable", ->
 
     it "with skips", ->
       table.topoSort("top", new Set([ "left1" ])).should.eql([ "base", "right", "top" ])
+
+  describe "dependency-sorts tasks", ->
+    table = new TaskTable()
+    table.tasks =
+      "top": new Task("top", depends: [ "left1", "right" ])
+      "left1": new Task("left1", depends: [ "left2" ])
+      "left2": new Task("left2", depends: [ "base" ])
+      "right": new Task("right", depends: [ "base" ])
+      "base": new Task("base")
+    wrap = (list) -> list.map (item) -> [ item, [] ]
+    unwrap = (list) -> list.map (item) -> item[0]
+
+    it "with no changes", ->
+      unwrap(table.dependencySort(wrap([ "base", "left1" ]))).should.eql [ "base", "left1" ]
+
+    it "directly", ->
+      unwrap(table.dependencySort(wrap([ "left2", "right", "base" ]))).should.eql [ "base", "left2", "right" ]
+
+    it "indirectly", ->
+      unwrap(table.dependencySort(wrap([ "left1", "base" ]))).should.eql [ "base", "left1" ]
+
+    it "with great disorder", ->
+      unwrap(table.dependencySort(wrap([ "top", "left2", "right", "left1", "base" ]))).should.eql [ "base", "left2", "left1", "right", "top" ]
+

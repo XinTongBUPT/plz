@@ -14,16 +14,34 @@ cloneOptions = (options) ->
   for k, v of options then rv[k] = v
   rv
 
+# merge two lists, keeping only the unique items.
+mergeUnique = (a, b) ->
+  rv = a[...]
+  if b? then for item in b then if rv.indexOf(item) < 0 then rv.push(item)
+  rv
+
+# if 'name' is not in the list, [ name, [ arg ] ] is added to the end.
+# if 'name' is already in the list, 'arg' is added to the arg-list using the
+# same algorithm -- it's only added if it's not already there.
+pushUnique = (list, name, arg = []) ->
+  for [ n, args ] in list
+    if n == name
+      for a in arg then if args.indexOf(a) < 0 then args.push a
+      return false
+  list.push [ name, arg ]
+  true
+
 # task "name",
 #   description: "displayed in help"
 #   before: "task"  # run immediately before another task, when that task is run
 #   after: "task"   # run immediately after another task, when that task is run
 #   attach: "task"  # run immediately after another task, or if that task doesn't exist, replace it
-#   must: [ "task", "task" ]  # run these dependent tasks first, always
-#   watch: [ "file-glob" ]    # run this task when any of these files change
-#   watchall: [ "file-glob" ] # run this task when any of these files change or are deleted
+#   depends: [ "task", "task" ]     # if these tasks will run in the same execution, run them first
+#   must: [ "task", "task" ]        # run these dependent tasks first, always
+#   watch: [ "file-glob" ]          # run this task when any of these files change
+#   watchall: [ "file-glob" ]       # run this task when any of these files change or are deleted
 #   always: true    # run this task always
-#   run: (context) -> ...     # code to run when executing
+#   run: (context) -> ...           # code to run when executing
 
 class Task
   constructor: (@name, options={}) ->
@@ -41,6 +59,8 @@ class Task
         Q.reject(e)
     @must = options.must
     if typeof @must == "string" then @must = [ @must ]
+    @depends = options.depends
+    if typeof @depends == "string" then @depends = [ @depends ]
     @before = options.before?.toString()
     @after = options.after?.toString()
     @attach = options.attach?.toString()
@@ -65,9 +85,8 @@ class Task
     if t.description == "(unknown)" then t.description = task.description
     if @watch? or task.watch?
       t.watch = (@watch or []).concat(task.watch or [])
-    if @must? or task.must?
-      t.must = (@must or [])
-      if task.must? then for m in task.must then if t.must.indexOf(m) < 0 then t.must.push(m)
+    if @must? or task.must? then t.must = mergeUnique(@must or [], task.must)
+    if @depends? or task.depends? then t.depends = mergeUnique(@depends or [], task.depends)
     t.run = (options) => @run(options).then -> task.run(options)
     if primaryTask.before? then t.before = primaryTask.before
     if primaryTask.after? then t.after = primaryTask.after

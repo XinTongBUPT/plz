@@ -44,6 +44,8 @@ class TaskTable
         @addTask new Task(task.attach)
       if task.must? then for t in task.must then if not @tasks[t]?
         (missing[t] or= []).push name
+      if task.depends? then for t in task.depends then if not @tasks[t]?
+        (missing[t] or= []).push name
     if Object.keys(missing).length > 0
       complaint = (for name, list of missing then "#{name} (referenced by #{list.sort().join(', ')})").sort().join(", ")
       throw new Error("Missing task(s): #{complaint}")
@@ -51,10 +53,10 @@ class TaskTable
   # can't depend on a task that's before/after some other task (cuz it'll go away in consolidation).
   validateDependenciesExist: ->
     for task in @allTasks()
-      for dep in (task.must or []).sort()
+      for dep in (task.must or []).concat(task.depends or []).sort()
         t = @tasks[dep]
         if t.before? or t.after? or t.attach?
-          target = t.before or t.after or t.attach?
+          target = t.before or t.after or t.attach
           throw new Error("Task #{t.name} can't require #{dep} because #{dep} is a decorator for #{target}")
 
   # look for cycles.
@@ -67,7 +69,7 @@ class TaskTable
       task = @tasks[name]
       if not path? then path = [ name ]
       seen[name] = path
-      for t in (task.must or []).concat(task.before or [], task.after or [], task.attach or []).sort()
+      for t in (task.must or []).concat(task.depends or [], task.before or [], task.after or [], task.attach or []).sort()
         if seen[t]?
           throw new Error("Dependency loop: #{path.concat(t).join(' -> ')}")
         walk(t, copy(seen), path.concat(t))
@@ -159,6 +161,28 @@ class TaskTable
       rv.push name
     visit(name)
     rv
+
+  # given a tasklist of [ name, [ filename ] ], if any tasks depend on a task
+  # further out to the right, move the depended-on task to the left of the
+  # depender.
+  dependencySort: (tasklist) ->
+    transitiveDeps = (task) =>
+      rv = task.depends or []
+      for t in rv then rv = rv.concat(transitiveDeps(@tasks[t]))
+      rv
+    names = tasklist.map (entry) -> entry[0]
+    for i in [0 ... names.length]
+      task = @tasks[names[i]]
+      for dep in transitiveDeps(task)
+        di = names.indexOf(dep)
+        if di > i
+          # boo! move it.
+          entry = tasklist[di]
+          tasklist.splice(di, 1)
+          tasklist.splice(i, 0, entry)
+          return @dependencySort(tasklist)
+    # all clear
+    tasklist
 
   toDebug: ->
     (for task in @allTasks() then task.toDebug()).join("\n")

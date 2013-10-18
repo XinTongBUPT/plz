@@ -37,12 +37,14 @@ describe "Task", ->
       description: "i'm second"
       before: "b2"
       must: [ "oranges", "apples" ]
+      depends: [ "nothing" ]
       watch: "*.js"
       run: (options) -> options.z = options.x
     t3 = t1.combine(t2, t1)
     t3.name.should.eql("first")
     t3.description.should.eql("i'm first")
     t3.must.should.eql [ "requisite", "apples", "oranges" ]
+    t3.depends.should.eql [ "nothing" ]
     t3.watch.should.eql [ "*.js" ]
     t3.before.should.eql("b1")
     options = { x: 9 }
