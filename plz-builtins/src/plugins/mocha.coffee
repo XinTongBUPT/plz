@@ -17,6 +17,7 @@ extend settings,
 plugins.mocha = ->
   task "test-mocha",
     attach: "test",
+    depends: "build",
     description: "run unit tests",
     watch: [ "#{settings.mocha.source}/**/*.js", "#{settings.mocha.testSource}/**/*.js" ],
     run: ->
