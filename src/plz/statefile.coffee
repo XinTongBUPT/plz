@@ -27,7 +27,8 @@ loadState = ->
       logging.error("Unable to read state file #{Config.stateFile()}: #{error.stack}")
       return deferred.reject(error)
     try
-      deferred.resolve(JSON.parse(data.toString()))
+      data = data.toString()
+      deferred.resolve(if data.length == 0 then {} else JSON.parse(data))
     catch error
       logging.error("Corrupted state file #{Config.stateFile()}: #{error.stack}")
       deferred.reject(error)
