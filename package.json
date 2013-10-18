@@ -37,6 +37,7 @@
   "devDependencies": {
     "minimatch": "*",
     "mocha": "*",
+    "mocha-sprinkles": "*",
     "should": "*"
   },
   "main": "./lib/plz",

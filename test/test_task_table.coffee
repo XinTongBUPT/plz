@@ -1,5 +1,6 @@
 fs = require 'fs'
 minimatch = require 'minimatch'
+mocha_sprinkles = require 'mocha-sprinkles'
 path = require 'path'
 Q = require 'q'
 shell = require 'shelljs'
@@ -14,9 +15,8 @@ Set = simplesets.Set
 Task = require("../lib/plz/task").Task
 TaskTable = require("../lib/plz/task_table").TaskTable
 
-test_util = require("./test_util")
-futureTest = test_util.futureTest
-withTempFolder = test_util.withTempFolder
+future = mocha_sprinkles.future
+withTempFolder = mocha_sprinkles.withTempFolder
 
 describe "TaskTable", ->
   describe "validates that all referenced tasks exist", ->
@@ -76,7 +76,7 @@ describe "TaskTable", ->
     (-> table.validate()).should.throw(/b is a decorator for d/)
 
   describe "consolidates", ->
-    it "before/after", futureTest ->
+    it "before/after", future ->
       table = new TaskTable()
       table.tasks =
         "a": new Task("a", after: "b", watch: "a.js", run: (options) -> options.x *= 3)
@@ -92,7 +92,7 @@ describe "TaskTable", ->
       c.run(options).then ->
         options.should.eql(x: 630)
 
-    it "in a promise-safe way", futureTest ->
+    it "in a promise-safe way", future ->
       table = new TaskTable()
       table.tasks =
         "primary": new Task("primary", run: (options) -> Q.delay(100).then(-> options.x += 99))
@@ -103,7 +103,7 @@ describe "TaskTable", ->
         options.should.eql(x: 200)
 
     describe "attach", ->
-      it "when the attached-to task exists", futureTest ->
+      it "when the attached-to task exists", future ->
         table = new TaskTable()
         table.tasks =
           "a": new Task("a", run: (options) -> options.x *= 3)
@@ -117,7 +117,7 @@ describe "TaskTable", ->
         a.run(options).then ->
           options.should.eql(x: 40)
 
-      it "when the attached-to task doesn't exist", futureTest ->
+      it "when the attached-to task doesn't exist", future ->
         table = new TaskTable()
         table.tasks =
           "b": new Task("b", attach: "a", run: (options) -> options.x += 10)
@@ -130,7 +130,7 @@ describe "TaskTable", ->
         a.run(options).then ->
           options.should.eql(x: 20)
 
-    it "attach before after", futureTest ->
+    it "attach before after", future ->
       table = new TaskTable()
       table.tasks =
         "a": new Task("a", run: (options) -> options.order.push "a")

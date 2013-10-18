@@ -1,5 +1,6 @@
 fs = require 'fs'
 minimatch = require 'minimatch'
+mocha_sprinkles = require 'mocha-sprinkles'
 path = require 'path'
 Q = require 'q'
 shell = require 'shelljs'
@@ -13,9 +14,8 @@ Task = require("../lib/plz/task").Task
 TaskTable = require("../lib/plz/task_table").TaskTable
 TaskRunner = require("../lib/plz/task_runner").TaskRunner
 
-test_util = require("./test_util")
-futureTest = test_util.futureTest
-withTempFolder = test_util.withTempFolder
+future = mocha_sprinkles.future
+withTempFolder = mocha_sprinkles.withTempFolder
 
 describe "TaskRunner", ->
   beforeEach ->
@@ -29,7 +29,7 @@ describe "TaskRunner", ->
     runner.enqueue "start", {}
     runner.queue.length.should.eql(1)
 
-  it "runs enqueued tasks", futureTest ->
+  it "runs enqueued tasks", future ->
     completed = []
     runner = new TaskTable().runner
     runner.table.tasks =
@@ -42,7 +42,7 @@ describe "TaskRunner", ->
     runner.runQueue().then ->
       completed.should.eql [ "first", "second" ]
 
-  it "waits for the run queue to finish before running again", futureTest ->
+  it "waits for the run queue to finish before running again", future ->
     completed = []
     runner = new TaskTable().runner
     runner.table.tasks =
@@ -61,7 +61,7 @@ describe "TaskRunner", ->
     runner.runQueue().then ->
       completed.should.eql [ "first1", "first2", "second", "last" ]
 
-  it "notices file-based dependencies immediately", futureTest withTempFolder (folder) ->
+  it "notices file-based dependencies immediately", future withTempFolder (folder) ->
     completed = []
     runner = new TaskTable().runner
     runner.table.tasks =
@@ -81,7 +81,7 @@ describe "TaskRunner", ->
       runner.queue.length.should.eql(0)
       runner.table.close()
 
-  it "won't queue up a task if that task is about to run anyway", futureTest withTempFolder (folder) ->
+  it "won't queue up a task if that task is about to run anyway", future withTempFolder (folder) ->
     completed = []
     runner = new TaskTable().runner
     runner.table.tasks =
@@ -102,7 +102,7 @@ describe "TaskRunner", ->
       runner.queue.length.should.eql(0)
       runner.table.close()
 
-  it "will re-enqueue a task that triggers itself", futureTest withTempFolder (folder) ->
+  it "will re-enqueue a task that triggers itself", future withTempFolder (folder) ->
     completed = []
     runner = new TaskTable().runner
     runner.table.tasks =
@@ -136,7 +136,7 @@ describe "TaskRunner", ->
       runner.queue.length.should.eql(0)
       runner.table.close()
 
-  it "won't re-run a dependency task that it's already run", futureTest withTempFolder (folder) ->
+  it "won't re-run a dependency task that it's already run", future withTempFolder (folder) ->
     completed = []
     runner = new TaskTable().runner
     runner.table.tasks =
@@ -156,7 +156,7 @@ describe "TaskRunner", ->
       runner.queue.length.should.eql(0)
       runner.table.close()
 
-  it "passes global settings to the task", futureTest withTempFolder (folder) ->
+  it "passes global settings to the task", future withTempFolder (folder) ->
     completed = []
     runner = new TaskTable().runner
     runner.settings.peaches = "10"
@@ -168,7 +168,7 @@ describe "TaskRunner", ->
     runner.runQueue().then ->
       completed.should.eql [ "10" ]
 
-  it "passes the changed filename list to the task", futureTest withTempFolder (folder) ->
+  it "passes the changed filename list to the task", future withTempFolder (folder) ->
     completed = []
     runner = new TaskTable().runner
     runner.table.tasks =
@@ -181,7 +181,7 @@ describe "TaskRunner", ->
     runner.runQueue().then ->
       completed.should.eql [ [ "file1", "file2" ] ]
 
-  it "collects filename changes from events while a task is enqueued", futureTest withTempFolder (folder) ->
+  it "collects filename changes from events while a task is enqueued", future withTempFolder (folder) ->
     completed = []
     runner = new TaskTable().runner
     runner.table.tasks =

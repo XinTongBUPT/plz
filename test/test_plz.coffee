@@ -1,5 +1,6 @@
 fs = require 'fs'
 minimatch = require 'minimatch'
+mocha_sprinkles = require 'mocha-sprinkles'
 path = require 'path'
 Q = require 'q'
 shell = require 'shelljs'
@@ -8,9 +9,8 @@ touch = require 'touch'
 util = require 'util'
 
 rulesfile = require("../lib/plz/rulesfile")
-test_util = require("./test_util")
-futureTest = test_util.futureTest
-withTempFolder = test_util.withTempFolder
+future = mocha_sprinkles.future
+withTempFolder = mocha_sprinkles.withTempFolder
 
 plz = require("../lib/plz/plz")
 
@@ -37,7 +37,7 @@ describe "plz", ->
     settings.should.eql({})
 
   describe "readRcFile", ->
-    it "trims", futureTest withTempFolder (folder) ->
+    it "trims", future withTempFolder (folder) ->
       fs.writeFileSync "#{folder}/plzrc", PLZRC_1
       process.env["PLZRC"] = "#{folder}/plzrc"
       plz.readRcFile({}).then (settings) ->
@@ -45,7 +45,7 @@ describe "plz", ->
       .fin ->
         delete process.env["PLZRC"]
 
-    it "ignores comments and blank lines", futureTest withTempFolder (folder) ->
+    it "ignores comments and blank lines", future withTempFolder (folder) ->
       fs.writeFileSync "#{folder}/plzrc", PLZRC_2
       process.env["PLZRC"] = "#{folder}/plzrc"
       plz.readRcFile({}).then (settings) ->
