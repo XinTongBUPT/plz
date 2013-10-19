@@ -79,7 +79,7 @@ class TaskRunner
         else
           pushUnique tasklist, t
     @queue = []
-    tasklist
+    @table.dependencySort(tasklist)
 
   # loop through a tasklist, running one at a time, skipping dupes.
   runTasks: (tasklist, completed = new Set()) ->
