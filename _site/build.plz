@@ -1,0 +1,6 @@
+jekyll = "/usr/bin/jekyll"
+
+task "build", watch: [ "_includes/**/*", "_layouts/**/*", "_posts/**/*", "_config.yml" ], run: ->
+  exec "#{jekyll} build"
+
+settings.clean = [ "_site" ]
