@@ -42,7 +42,7 @@ The complete list of options is:
 They're described in more detail below.
 
 
-## Watching files
+## <a name="watching-files"> Watching files </a>
 
 If a task is "watching" files, it will be queued for execution whenever any of those files change.
 
@@ -67,7 +67,7 @@ A `watchall` is additionally triggered when any file matching that pattern is de
 Watches are powerful and are key to plz's power. Whenever possible, you should prefer watches over explicit dependencies. If you ever wonder why a task is executing, use the "-v" (verbose) option to see when a task is triggered by a file watch, and "-D" to see which files are changing and which tasks they're triggering.
 
 
-## Run function
+## <a name="run"> Run function </a>
 
 The `run` function takes an optional argument: a `context` object with the following fields:
 
@@ -79,7 +79,7 @@ The `filenames` field is only meaningful if the task is watching files. If this 
 The function may return any value, which is ignored. If the function returns a promise, plz will wait for the promise to complete before moving on.
 
 
-## Dependencies
+## <a name="dependencies"> Dependencies </a>
 
 You may set explicit dependencies between tasks in two ways: `must` or `depends`.
 
@@ -104,7 +104,7 @@ task "test", watch: [ "src/**/*.c", "test/*" ], depends: "compile", run: ->
 ```
 
 
-## Before and after tasks
+## <a name="before-and-after"> Before and after tasks </a>
 
 A task may ask to run before or after some other task, which will merge the two tasks. The attached task's function will be executed before or after the original task, and any dependencies or watches will be merged. The attached task won't show up in the task list -- it's now part of the original task.
 
