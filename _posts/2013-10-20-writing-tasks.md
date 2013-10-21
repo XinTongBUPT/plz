@@ -1,21 +1,10 @@
 ---
-layout: post
+layout: page
 title: Writing tasks
-description: "Just about everything you'll need to style in the theme: headings, paragraphs, blockquotes, tables, code blocks, and more."
+description: "?"
 category: articles
 ---
 
-<section id="table-of-contents" class="toc">
-  <header>
-    <h3>Contents</h3>
-  </header>
-<div id="drawer" markdown="1">
-*  Auto generated table of contents
-{:toc}
-</div>
-</section><!-- /#table-of-contents -->
-
-# Writing tasks
 
 Tasks are defined with the `task` function:
 

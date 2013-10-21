@@ -1,6 +1,8 @@
 
 markdown: redcarpet
 baseurl: /plz
+permalink: none
+pygments: true
 redcarpet:
   extensions:
     - hard_wrap
@@ -8,3 +10,4 @@ redcarpet:
     - autolink
     - strikethrough
     - fenced_code_blocks
+
