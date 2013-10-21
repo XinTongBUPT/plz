@@ -79,9 +79,46 @@ The `filenames` field is only meaningful if the task is watching files. If this 
 The function may return any value, which is ignored. If the function returns a promise, plz will wait for the promise to complete before moving on.
 
 
+## Dependencies
+
+You may set explicit dependencies between tasks in two ways: `must` or `depends`.
+
+A task that *must* run before this task forces the dependent task to be executed whenever this task is. For example, to force the "push" task to verify that the site is healthy first, you might use:
+
+```coffeescript
+task "push", describe: "push new code to production", must: "verify-site", run: ->
+  # ...
+
+task "verify-site", describe: "verify that the production site is healthy", run: ->
+  # ...
+```
+
+To enforce a general ordering of tasks that only takes effect if both tasks will be executed, use `depends`. This is useful for hinting that there's an optimal ordering to execute some tasks. For example, changing a source file might trigger both "compile" to re-compile the source, and "test" to run the unit tests. But it would be pointless to run the tests before compiling, since re-compiling will just trigger the tests again, so:
+
+```coffeescript
+task "compile", watch: "src/**/*.c", run: ->
+  # ...
+
+task "test", watch: [ "src/**/*.c", "test/*" ], depends: "compile", run: ->
+  # ...
+```
 
 
+## Before and after tasks
 
+A task may ask to run before or after some other task, which will merge the two tasks. The attached task's function will be executed before or after the original task, and any dependencies or watches will be merged. The attached task won't show up in the task list -- it's now part of the original task.
 
+For example, to ensure that all folders are created before compiling:
 
+```coffeescript
+task "make-folders", before: "compile", run: ->
+  mkdir "-p", "target"
+```
 
+`attach` works exactly like `after`, but doesn't require the original task to exist. This is a convenience for letting plugins run code for common tasks without having to test if those tasks exist.
+
+```coffeescript
+task "build-coffee", attach: "build", description: "compile coffee-script source", run: ->
+  mkdir "-p", "lib"
+  exec "coffee -o lib -c src"
+```
