@@ -24,7 +24,7 @@ It will then assemble a list of tasks to execute, based on:
 
 Plz uses the saved-state file to notice any files that have changed since the last execution, so tasks may be triggered immediately.
 
-After assembling the list of tasks to execute, it will add any `must` dependencies (see <a href="{{ baseurl }}/articles/writing-tasks.html#dependencies">Dependencies</a>), and sorts them (topologically) so that the deepest dependencies come first. Chains of dependencies are followed, but cycles aren't allowed. These are all then enqueued, uniquely, so that no task is enqueued twice. The tasks may then be re-ordered based on `depends` dependencies, if necessary.
+After assembling the list of tasks to execute, it will add any `must` dependencies (see <a href="{{ site.baseurl }}/articles/writing-tasks.html#dependencies">Dependencies</a>), and sorts them (topologically) so that the deepest dependencies come first. Chains of dependencies are followed, but cycles aren't allowed. These are all then enqueued, uniquely, so that no task is enqueued twice. The tasks may then be re-ordered based on `depends` dependencies, if necessary.
 
 Plz then runs each task in the queue, one at a time, in order, until there's an error or the queue is finished.
 
@@ -34,7 +34,6 @@ Normally, plz will then exit.
 
 If it's running in `--watch` (`-w`) mode, plz will block instead, waiting for file watches to trigger, until killed (usually by hitting control-C).
 
-The `--verbose` (`-v`) option will make plz display the names of tasks as it
-executes them.
+The `--verbose` (`-v`) option will make plz display the names of tasks as it executes them.
 
 The `--debug` (`-D`) option will make it dump more detailed debugging info about file watches and internal state, including which file changes triggered which tasks.
