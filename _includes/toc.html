@@ -1,22 +1,16 @@
 <ul>
-  <li>
-    <a href="{{ site.baseurl }}/articles/how-it-works.html"> How it works </a>
-  </li>
-  <li>
-    <a href="{{ site.baseurl }}/articles/writing-tasks.html"> Writing tasks </a>
-    <ul>
-      <li>
-        <a href="{{ site.baseurl }}/articles/writing-tasks.html#watching-files"> Watching files </a>
-      </li>
-      <li>
-        <a href="{{ site.baseurl }}/articles/writing-tasks.html#run"> Run function </a>
-      </li>
-      <li>
-        <a href="{{ site.baseurl }}/articles/writing-tasks.html#dependencies"> Dependencies </a>
-      </li>
-      <li>
-        <a href="{{ site.baseurl }}/articles/writing-tasks.html#before-and-after"> Before and after tasks </a>
-      </li>
-    </ul>
-  </li>
+  {% for item in site.toc %}
+    <li>
+      <a href="{{ site.baseurl }}/articles/{{ item.link }}.html"> {{ item.title }} </a>
+    </li>
+    {% if item.chapters %}
+      <ul>
+      {% for chapter in item.chapters %}
+        <li>
+          <a href="{{ site.baseurl }}/articles/{{ item.link }}.html#{{ chapter.link }}"> {{ chapter.title }} </a>
+        </li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+  {% endfor %}
 </ul>

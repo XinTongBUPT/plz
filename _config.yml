@@ -11,3 +11,17 @@ redcarpet:
     - strikethrough
     - fenced_code_blocks
 
+toc:
+  - title: "How it works"
+    link: "how-it-works"
+  - title: "Writing tasks"
+    link: "writing-tasks"
+    chapters:
+      - title: "Watching files"
+        link: "watching-files"
+      - title: "Run function"
+        link: "run"
+      - title: "Dependencies"
+        link: "dependencies"
+      - title: "Before and after tasks"
+        link: "before-and-after"
