@@ -1,6 +1,6 @@
 
 markdown: redcarpet
-baseurl: /plz
+baseurl: "/plz"
 permalink: none
 pygments: true
 redcarpet:
