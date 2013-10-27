@@ -1,16 +1,21 @@
+#
+# if tasks are listed on the CLI, don't run watches first.
+#
+
 fs = require 'fs'
 path = require 'path'
 Q = require 'q'
 util = require 'util'
 
 context = require("./context")
-defaults = require("./defaults")
 Config = require("./config").Config
 logging = require("./logging")
 plugins = require("./plugins")
 TaskTable = require("./task_table").TaskTable
 
 DEFAULT_FILENAME = "build.plz"
+BUILTINS_HOME = path.join path.dirname(__filename), "../../node_modules/plz-builtins/lib/plz-builtins.js"
+BUILTINS = fs.readFileSync(BUILTINS_HOME)
 
 # scan the path for a rules file and compile it. returns a Future[TaskTable]
 # if successful.
@@ -61,9 +66,10 @@ compileRulesFile = (settings) ->
 compile = (data, settings={}) ->
   table = new TaskTable()
   table.runner.settings = settings
-  sandbox = context.makeContext(Config.rulesFile(), table)
-  plugins.eval$(defaults.defaults, sandbox: sandbox, filename: "<defaults>")
-  plugins.eval$(data, sandbox: sandbox, filename: Config.rulesFile())
+  globals = context.makeContext(table)
+  loader = new plugins.ModuleLoader()
+  loader.load("require(\"#{BUILTINS_HOME}\");", "<builtins>", globals)
+  loader.load(data, Config.rulesFile() or "<build.plz>", globals)
   table
 
 

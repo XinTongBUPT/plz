@@ -1,6 +1,6 @@
 {
-  "name": "plz",
-  "version": "2.0.0-rc.1018",
+  "name": "plz-builtins",
+  "version": "2.0.0",
   "date": "2013-10-01",
   "description": "simple build automation",
   "keywords": [ "make", "build" ],
@@ -18,40 +18,18 @@
     }
   ],
 
-  "scripts": {
-    "test": "plz test -v --color"
-  },
   "dependencies": {
     "coffee-script": "*",
-    "glob": "*",
-    "globwatcher": ">= 1.2.1",
-    "nopt": "*",
-    "plz-builtins": "*",
-    "q": "*",
-    "shelljs": "*",
-    "simplesets": "*",
-    "sprintf": "*",
-    "strftime": "*",
-    "touch": "*"
+    "q": "*"
   },
   "devDependencies": {
-    "minimatch": "*",
     "mocha": "*",
-    "mocha-sprinkles": "*",
+    "shelljs": "*",
     "should": "*"
   },
-  "main": "./lib/plz",
+  "main": "./lib/plz-builtins",
   "files": [
     "build.plz",
-    "lib",
-    "bin/plz",
-    "test"
-  ],
-  "bin": {
-    "plz": "bin/plz"
-  },
-  "preferGlobal": "true",
-  "engines": {
-    "node" : ">=0.10.1"
-  }
+    "lib"
+  ]
 }

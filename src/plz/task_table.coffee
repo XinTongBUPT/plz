@@ -1,10 +1,17 @@
-globwatcher = require 'globwatcher'
 Q = require 'q'
+simplesets = require 'simplesets'
 util = require 'util'
 
+config = require("./config")
 logging = require("./logging")
-Task = require("./task").Task
-TaskRunner = require("./task_runner").TaskRunner
+statefile = require("./statefile")
+task = require("./task")
+task_runner = require("./task_runner")
+
+Config = config.Config
+Set = simplesets.Set
+Task = task.Task
+TaskRunner = task_runner.TaskRunner
 
 # how long to wait to run a job after it is triggered (msec)
 QUEUE_DELAY = 100
@@ -17,6 +24,8 @@ class TaskTable
   getNames: -> Object.keys(@tasks).sort()
   getTask: (name) -> @tasks[name]
   addTask: (task) -> @tasks[task.name] = task
+  allTasks: -> for name in @getNames() then @getTask(name)
+  allWatchers: -> [].concat.apply([], for task in @allTasks() then (task.watchers or []))
 
   validate: ->
     @validateReferences()
@@ -35,19 +44,20 @@ class TaskTable
         @addTask new Task(task.attach)
       if task.must? then for t in task.must then if not @tasks[t]?
         (missing[t] or= []).push name
+      if task.depends? then for t in task.depends then if not @tasks[t]?
+        (missing[t] or= []).push name
     if Object.keys(missing).length > 0
       complaint = (for name, list of missing then "#{name} (referenced by #{list.sort().join(', ')})").sort().join(", ")
       throw new Error("Missing task(s): #{complaint}")
 
   # can't depend on a task that's before/after some other task (cuz it'll go away in consolidation).
   validateDependenciesExist: ->
-    for name in @getNames()
-      task = @tasks[name]
-      for dep in (task.must or []).sort()
+    for task in @allTasks()
+      for dep in (task.must or []).concat(task.depends or []).sort()
         t = @tasks[dep]
         if t.before? or t.after? or t.attach?
-          target = t.before or t.after or t.attach?
-          throw new Error("Task #{name} can't require #{dep} because #{dep} is a decorator for #{target}")
+          target = t.before or t.after or t.attach
+          throw new Error("Task #{t.name} can't require #{dep} because #{dep} is a decorator for #{target}")
 
   # look for cycles.
   validateCycles: ->
@@ -59,7 +69,7 @@ class TaskTable
       task = @tasks[name]
       if not path? then path = [ name ]
       seen[name] = path
-      for t in (task.must or []).concat(task.before or [], task.after or [], task.attach or []).sort()
+      for t in (task.must or []).concat(task.depends or [], task.before or [], task.after or [], task.attach or []).sort()
         if seen[t]?
           throw new Error("Dependency loop: #{path.concat(t).join(' -> ')}")
         walk(t, copy(seen), path.concat(t))
@@ -81,56 +91,65 @@ class TaskTable
         @tasks[oldtask.name] = newtask
         delete @tasks[name]
     for name in @getNames() then process(@tasks[name], "before")
-    for name in @getNames() then process(@tasks[name], "after")
     for name in @getNames() then process(@tasks[name], "attach")
+    for name in @getNames() then process(@tasks[name], "after")
+
+  # enqueue tasks that should always run (at startup)
+  enqueueAlways: ->
+    for task in @allTasks() then if task.always then @runner.enqueue(task.name)
+
+  runQueue: ->
+    @runner.runQueue()
+    .then (completed) =>
+      @saveState(completed?.size(), [])
+    .fail (error) =>
+      @saveState(error.plz?.completed?.size(), error.plz?.tasklist).then -> throw error
+
+  saveState: (completedCount, incomplete) ->
+    if Config.monitor() and completedCount? and completedCount > 0
+      state =
+        version: 1
+        snapshots: @snapshotWatches()
+        incomplete: incomplete or []
+      statefile.saveState(state)
+    else
+      Q(null)
 
   # turn on all the watches.
-  # options: { persistent, debounceInterval, interval }
-  activate: (options) ->
-    options.debug = (text) -> logging.debug "watch: #{text}"
-    promises = []
-    for name in @getNames() then do (name) =>
-      task = @getTask(name)
-      task.watchers = []
-      if task.watch?
-        watcher = @activateWatch(task.watch, options, name, false)
-        promises.push watcher.ready
-        task.watchers.push watcher
-      if task.watchall?
-        watcher = @activateWatch(task.watchall, options, name, true)
-        promises.push watcher.ready
-        task.watchers.push watcher
-    Q.all(promises)
-
-  activateWatch: (watch, options, name, alsoDeletes) ->
-    watcher = globwatcher.globwatcher(watch, options)
-    handler = =>
-      if @runner.enqueue(name)
-        logging.taskinfo "--- File change triggered: #{name}"
-        @runner.runQueue()
-    watcher.on "added", handler
-    watcher.on "changed", handler
-    if alsoDeletes then watcher.on "deleted", handler
-    watcher
+  activate: (snapshots, options) ->
+    Q.all(
+      for task in @allTasks() then do (task) =>
+        handler = (filename, watch) =>
+          return unless Config.monitor()
+          logging.debug "File changed: #{filename} detected by #{util.inspect(watch)}"
+          if @runner.enqueue(task.name, filename)
+            logging.taskinfo "--- File change triggered: #{task.name}"
+            @runQueue()
+        task.activateWatches(options, snapshots, handler)
+    )
 
   # turn off all watches
   close: ->
-    for name in @getNames()
-      task = @getTask(name)
-      if task.watchers? then task.watchers.map (w) -> w.close()
+    for w in @allWatchers() then w.close()
 
   # check any watched files, proactively.
   # returns a promise that will be fulfilled when the checks are done.
   checkWatches: ->
-    Q.all(
-      for name in @getNames()
-        task = @getTask(name)
-        if task.watchers? then Q.all(task.watchers.map((w) -> w.check())) else Q(null)
-    )
+    logging.debug "Check watches..."
+    Q.all(for w in @allWatchers() then w.check()).then ->
+      logging.debug "...done checking watches."
+
+  # return a union of the saved states of any watchers
+  snapshotWatches: ->
+    snapshots = {}
+    for w in @allWatchers()
+      key = w.originalPatterns.join("\n")
+      snapshots[key] = w.snapshot()
+    snapshots
 
   # return a list of task names, sorted by dependency order, needed for this task.
   # 'skip' is a list of dependencies to skip.
-  topoSort: (name, skip = {}) ->
+  topoSort: (name, skip = new Set()) ->
     rv = []
     # make a copy of 'graph' so we don't destroy it. it's mutable in JS.
     tasks = {}
@@ -138,10 +157,36 @@ class TaskTable
     visit = (name) ->
       deps = (tasks[name]?.must or [])
       delete tasks[name]
-      for t in deps then if (not skip[t]?) and tasks[t]? then visit(t)
+      for t in deps then if (not skip.has(t)) and tasks[t]? then visit(t)
       rv.push name
     visit(name)
     rv
+
+  # given a tasklist of [ name, [ filename ] ], if any tasks depend on a task
+  # further out to the right, move the depended-on task to the left of the
+  # depender.
+  dependencySort: (tasklist) ->
+    transitiveDeps = (task) =>
+      rv = task.depends or []
+      for t in rv then rv = rv.concat(transitiveDeps(@tasks[t]))
+      rv
+    names = tasklist.map (entry) -> entry[0]
+    for i in [0 ... names.length]
+      task = @tasks[names[i]]
+      for dep in transitiveDeps(task)
+        di = names.indexOf(dep)
+        if di > i
+          # boo! move it.
+          entry = tasklist[di]
+          tasklist.splice(di, 1)
+          tasklist.splice(i, 0, entry)
+          return @dependencySort(tasklist)
+    # all clear
+    tasklist
+
+  toDebug: ->
+    (for task in @allTasks() then task.toDebug()).join("\n")
+
 
 exports.QUEUE_DELAY = QUEUE_DELAY
 exports.TaskTable = TaskTable

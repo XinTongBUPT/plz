@@ -10,6 +10,7 @@ Config = require("./config").Config
 context = require("./context")
 logging = require("./logging")
 rulesfile = require("./rulesfile")
+statefile = require("./statefile")
 task = require("./task")
 task_table = require("./task_table")
 
@@ -42,8 +43,6 @@ main = ->
     # allow settings.options to take effect, then allow argv to override them.
     if settings.options? then parseOptions(settings.options.split(" "), 0)
     options = parseOptions(process.argv)
-    # voodoo that might make Q faster
-    if not options.debug then Q.longStackJumpLimit = 0
     run(options, settings)
   .fail (error) ->
     logging.error error.message
@@ -97,10 +96,17 @@ runWithTable = (options, settings, table, startTime) ->
   logging.debug "Settings: #{util.inspect(settings)}"
   for name in options.tasklist
     if not table.getTask(name)? then throw new Error("No task named '#{name}'")
-  table.activate(persistent: options.watch, interval: 250)
-  .then ->
+  statefile.loadState()
+  .then (state) ->
+    if (not state?.version?) or (state.version > 1) then state = { snapshots: { } }
+    table.enqueueAlways()
+    for [ name, filenames ] in (state.incomplete or []) then if table.getTask(name)? then table.runner.enqueue(name, filenames)
     for name in options.tasklist then table.runner.enqueue(name)
-    table.runner.runQueue()
+    logging.debug "Activating watches..."
+    table.activate(state.snapshots, persistent: options.watch, interval: 250)
+  .then ->
+    table.runner.start()
+    table.runQueue()
   .then ->
     if options.watch
       logging.taskinfo "Watching for changes..."
@@ -150,7 +156,6 @@ parseTaskList = (options, settings={}) ->
       obj[segments[segments.length - 1]] = m[2]
     else
       throw new Error("I don't know what to do with '#{word}'")
-  if tasklist.length == 0 then tasklist.push DEFAULT_TASK
   options.tasklist = tasklist
   [ tasklist, settings ]
 

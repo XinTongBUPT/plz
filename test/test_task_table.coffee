@@ -1,20 +1,22 @@
 fs = require 'fs'
 minimatch = require 'minimatch'
+mocha_sprinkles = require 'mocha-sprinkles'
 path = require 'path'
 Q = require 'q'
 shell = require 'shelljs'
+simplesets = require 'simplesets'
 should = require 'should'
 touch = require 'touch'
 util = require 'util'
 
 logging = require("../lib/plz/logging")
 
+Set = simplesets.Set
 Task = require("../lib/plz/task").Task
 TaskTable = require("../lib/plz/task_table").TaskTable
 
-test_util = require("./test_util")
-futureTest = test_util.futureTest
-withTempFolder = test_util.withTempFolder
+future = mocha_sprinkles.future
+withTempFolder = mocha_sprinkles.withTempFolder
 
 describe "TaskTable", ->
   describe "validates that all referenced tasks exist", ->
@@ -74,7 +76,7 @@ describe "TaskTable", ->
     (-> table.validate()).should.throw(/b is a decorator for d/)
 
   describe "consolidates", ->
-    it "before/after", futureTest ->
+    it "before/after", future ->
       table = new TaskTable()
       table.tasks =
         "a": new Task("a", after: "b", watch: "a.js", run: (options) -> options.x *= 3)
@@ -90,8 +92,18 @@ describe "TaskTable", ->
       c.run(options).then ->
         options.should.eql(x: 630)
 
+    it "in a promise-safe way", future ->
+      table = new TaskTable()
+      table.tasks =
+        "primary": new Task("primary", run: (options) -> Q.delay(100).then(-> options.x += 99))
+        "barnacle": new Task("barnacle", after: "primary", run: (options) -> options.x *= 2)
+      table.consolidate()
+      options = { x: 1 }
+      table.getTask("primary").run(options).then ->
+        options.should.eql(x: 200)
+
     describe "attach", ->
-      it "when the attached-to task exists", futureTest ->
+      it "when the attached-to task exists", future ->
         table = new TaskTable()
         table.tasks =
           "a": new Task("a", run: (options) -> options.x *= 3)
@@ -105,7 +117,7 @@ describe "TaskTable", ->
         a.run(options).then ->
           options.should.eql(x: 40)
 
-      it "when the attached-to task doesn't exist", futureTest ->
+      it "when the attached-to task doesn't exist", future ->
         table = new TaskTable()
         table.tasks =
           "b": new Task("b", attach: "a", run: (options) -> options.x += 10)
@@ -117,6 +129,29 @@ describe "TaskTable", ->
         options = { x: 10 }
         a.run(options).then ->
           options.should.eql(x: 20)
+
+    it "attach before after", future ->
+      table = new TaskTable()
+      table.tasks =
+        "a": new Task("a", run: (options) -> options.order.push "a")
+        "b": new Task("b", attach: "a", run: (options) -> options.order.push "b")
+        "c": new Task("c", after: "a", run: (options) -> options.order.push "c")
+      table.validate()
+      table.consolidate()
+      table.getNames().should.eql [ "a" ]
+      a = table.getTask("a")
+      a.covered.sort().should.eql [ "a", "b", "c" ]
+      options = { order: [] }
+      a.run(options).then ->
+        options.order.should.eql [ "a", "b", "c" ]
+
+  it "enqueues 'always' tasks", ->
+    table = new TaskTable()
+    table.tasks =
+      "a": new Task("a")
+      "b": new Task("b", always: true)
+    table.enqueueAlways()
+    table.runner.queue.map((x) -> x[0]).should.eql [ "b" ]    
 
   describe "topologically sorts tasks", ->
     table = new TaskTable()
@@ -131,4 +166,28 @@ describe "TaskTable", ->
       table.topoSort("top").should.eql([ "base", "left2", "left1", "right", "top" ])
 
     it "with skips", ->
-      table.topoSort("top", left1: true).should.eql([ "base", "right", "top" ])
+      table.topoSort("top", new Set([ "left1" ])).should.eql([ "base", "right", "top" ])
+
+  describe "dependency-sorts tasks", ->
+    table = new TaskTable()
+    table.tasks =
+      "top": new Task("top", depends: [ "left1", "right" ])
+      "left1": new Task("left1", depends: [ "left2" ])
+      "left2": new Task("left2", depends: [ "base" ])
+      "right": new Task("right", depends: [ "base" ])
+      "base": new Task("base")
+    wrap = (list) -> list.map (item) -> [ item, [] ]
+    unwrap = (list) -> list.map (item) -> item[0]
+
+    it "with no changes", ->
+      unwrap(table.dependencySort(wrap([ "base", "left1" ]))).should.eql [ "base", "left1" ]
+
+    it "directly", ->
+      unwrap(table.dependencySort(wrap([ "left2", "right", "base" ]))).should.eql [ "base", "left2", "right" ]
+
+    it "indirectly", ->
+      unwrap(table.dependencySort(wrap([ "left1", "base" ]))).should.eql [ "base", "left1" ]
+
+    it "with great disorder", ->
+      unwrap(table.dependencySort(wrap([ "top", "left2", "right", "left1", "base" ]))).should.eql [ "base", "left2", "left1", "right", "top" ]
+

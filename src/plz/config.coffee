@@ -1,6 +1,6 @@
 logging = require("./logging")
 
-VERSION = "1.0.0"
+VERSION = "2.0.0-rc.1018"
 
 # put all runtime config stuff in here, so it can be accessed from a running
 # build script too.
@@ -17,9 +17,25 @@ Config =
     if filename? then @_rulesFile = filename
     @_rulesFile
 
+  stateFile: (filename) ->
+    if filename? then @_stateFile = filename
+    @_stateFile
+  
+  monitor: (value) ->
+    if value? then @_monitor = value
+    @_monitor
+
   version: ->
     VERSION
 
+  # for tests
+  reset: ->
+    @_rulesFile = null
+    @_stateFile = null
+    @_monitor = true
+
+
+Config.reset()
 
 exports.Config = Config
 exports.VERSION = VERSION

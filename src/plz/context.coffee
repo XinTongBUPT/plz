@@ -3,6 +3,7 @@
 #
 
 child_process = require 'child_process'
+glob = require 'glob'
 path = require 'path'
 Q = require 'q'
 shell = require 'shelljs'
@@ -58,6 +59,11 @@ defaultGlobals =
   process: process
   Buffer: Buffer
   Q: Q
+  glob: (pattern, options = {}) ->
+    deferred = Q.defer()
+    glob pattern, options, (error, files) ->
+      if error? then deferred.reject(error) else deferred.resolve(files)
+    deferred.promise
   # logging:
   debug: logging.debug
   info: logging.info
@@ -71,13 +77,12 @@ defaultGlobals =
     touch.sync(args...)
   exec: exec
   plz: Config
-  load: plugins.load
   plugins: plugins.plugins
   extend: (map1, map2) ->
     for k, v of map2 then map1[k] = v
     map1
 
-makeContext = (filename, table) ->
+makeContext = (table) ->
   globals = {}
   for k, v of defaultGlobals then globals[k] = v
   for command in ShellCommands then do (command) ->
@@ -85,13 +90,15 @@ makeContext = (filename, table) ->
       logging.info "+ #{command} #{trace(args)}"
       shell[command](args...)
 
+  globals.load = (name) -> plugins.load(name, globals._require)
+
   # define new task
   globals.task = (name, options) ->
     logging.debug "Defining task: #{name}"
     table.addTask(new task.Task(name, options))
-  globals.runTask = (name, args={}) ->
-    logging.debug "Injecting task: #{name}"
-    table.runner.enqueue(name, args)
+  globals.runTask = (name, filename = null) ->
+    logging.debug "Triggering task: #{name}"
+    table.runner.enqueue(name, filename)
 
   globals.settings = table.runner.settings
 
@@ -100,6 +107,7 @@ makeContext = (filename, table) ->
     name: path.basename(process.cwd())
     type: "basic"
 
-  plugins.createContext(filename, globals)
+  globals
+
 
 exports.makeContext = makeContext
