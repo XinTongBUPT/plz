@@ -44,3 +44,12 @@ toc:
         link: "configuration"
       - title: "Tasks"
         link: "tasks"
+  - title: "Plugins"
+    link: "plugins"
+    chapters:
+      - title: "Clean / distclean"
+        link: "clean"
+      - title: "Mocha"
+        link: "mocha"
+      - title: "Coffee-script"
+        link: "coffee-script"
