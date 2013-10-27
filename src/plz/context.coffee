@@ -96,9 +96,9 @@ makeContext = (table) ->
   globals.task = (name, options) ->
     logging.debug "Defining task: #{name}"
     table.addTask(new task.Task(name, options))
-  globals.runTask = (name, args={}) ->
-    logging.debug "Injecting task: #{name}"
-    table.runner.enqueue(name, args)
+  globals.runTask = (name, filename = null) ->
+    logging.debug "Triggering task: #{name}"
+    table.runner.enqueue(name, filename)
 
   globals.settings = table.runner.settings
 
