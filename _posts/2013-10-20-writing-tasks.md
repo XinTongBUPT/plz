@@ -28,16 +28,16 @@ Known tasks:
 
 The complete list of options is:
 
-- `description`: long-form description for humans
-- `before`: prepend this task to another task, by name
-- `after`: append this task to another task, by name
-- `attach`: append this task to another task, by name, creating the task if necessary
-- `must`: execute the listed tasks before this task, no matter what
-- `depends`: if the listed tasks are queued for execution, prioritize them ahead of this task
-- `watch`: execute this task if any of the listed files change
-- `watchall`: execute this task if any of the listed files change or are deleted
-- `always`: execute this task every time, no matter what
-- `run`: function to run when executing this task
+- `description` - long-form description for humans
+- `before` - prepend this task to another task, by name
+- `after` - append this task to another task, by name
+- `attach` - append this task to another task, by name, creating the task if necessary
+- `must` - execute the listed tasks before this task, no matter what
+- `depends` - if the listed tasks are queued for execution, prioritize them ahead of this task
+- `watch` - execute this task if any of the listed files change
+- `watchall` - execute this task if any of the listed files change or are deleted
+- `always` - execute this task every time, no matter what
+- `run` - function to run when executing this task
 
 They're described in more detail below.
 
