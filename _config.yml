@@ -12,6 +12,13 @@ redcarpet:
     - fenced_code_blocks
 
 toc:
+  - title: "What is it?"
+    link: "what-is-it"
+    chapters:
+      - title: "Manifesto"
+        link: "manifesto"
+      - title: "Example"
+        link: "example"
   - title: "How it works"
     link: "how-it-works"
   - title: "Basic tasks"
