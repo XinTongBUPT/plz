@@ -12,7 +12,7 @@ Plz is a script automation system like "make", "rake", and "cake". It aims to ma
 - Tasks can depend on other tasks, attach themselves before/after other tasks, or they can be run automatically when a file changes, based on glob patterns.
 
 
-## *[plz docs](http://robey.github.io/plz/articles/what-is-it.html)*
+**[Documentation](http://robey.github.io/plz/articles/what-is-it.html)**
 
 
 Install
