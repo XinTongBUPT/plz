@@ -65,11 +65,14 @@ parseOptions = (argv, slice) ->
 
 displayHelp = (table) ->
   taskNames = table.getNames()
-  width = taskNames.map((x) -> x.length).reduce((a, b) -> Math.max(a, b))
-  console.log "Known tasks:"
-  for t in taskNames
-    console.log sprintf.sprintf("  %#{width}s - %s", t, table.getTask(t).description)
-  console.log ""
+  if taskNames.length == 0
+    console.log "No tasks defined."
+  else
+    width = taskNames.map((x) -> x.length).reduce((a, b) -> Math.max(a, b))
+    console.log "Known tasks:"
+    for t in taskNames
+      console.log sprintf.sprintf("  %#{width}s - %s", t, table.getTask(t).description)
+    console.log ""
   process.exit 0
 
 run = (options, overlaySettings) ->
