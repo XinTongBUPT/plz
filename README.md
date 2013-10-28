@@ -11,9 +11,8 @@ Plz is a script automation system like "make", "rake", and "cake". It aims to ma
 - Most of the basic shell commands are exposed as global functions via [shelljs](https://github.com/arturadib/shelljs), or just call "exec".
 - Tasks can depend on other tasks, attach themselves before/after other tasks, or they can be run automatically when a file changes, based on glob patterns.
 
-For more info:
 
-- *[plz documentation](http://robey.github.io/plz/articles/what-is-it.html)
+## *[plz docs](http://robey.github.io/plz/articles/what-is-it.html)*
 
 
 Install
