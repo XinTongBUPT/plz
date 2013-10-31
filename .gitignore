@@ -5,3 +5,4 @@
 /node_modules/
 /plz-builtins/lib/
 /plz-builtins/node_modules/
+.plz
