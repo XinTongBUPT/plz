@@ -13,7 +13,7 @@ Plz is a script automation system like "make", "rake", and "cake". It aims to ma
 
 When tasks are triggered by watching for changed files, dependencies become automatic, and less "manual wiring" is required. It adds surprising leverage.
 
-**Check out the [copious documentation](http://robey.github.io/plz/articles/what-is-it.html).**
+**[Check out the copious documentation](http://robey.github.io/plz/articles/what-is-it.html).**
 
 
 Install
