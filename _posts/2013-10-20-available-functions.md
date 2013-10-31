@@ -21,16 +21,11 @@ Plz provides a number of global functions (and a few objects) for use in build f
 
 Some examples:
 
-```coffeescript
-glob("assets/js/*.js").then (filenames) ->
-  for filename in filenames
-    notice "Another glorious javascript file! I found: #{filename}"
-
-cat =
-  name: "Snowball II"
-extend(cat, color: "black")
-# 'cat' now has both fields
-```
+{% include code-header.html name="af-sample" %}
+{% include code/af-sample-js.md %}
+{% include code-middle.html name="af-sample" %}
+{% include code/af-sample-coffee.md %}
+{% include code-footer.html name="af-sample" %}
 
 
 ## <a name="logging"></a> Logging
@@ -73,11 +68,11 @@ The following functions are imported from [shelljs](https://github.com/arturadib
 
 They generally work just like the corresponding shell commands (including commonly supported options):
 
-```coffeescript
-mkdir "-p", "build/classes/main"
-cp "src/#{filename}" "dist/original/#{filename}"
-touch "/tmp/stop"
-```
+{% include code-header.html name="af-shell" %}
+{% include code/af-shell-js.md %}
+{% include code-middle.html name="af-shell" %}
+{% include code/af-shell-coffee.md %}
+{% include code-footer.html name="af-shell" %}
 
 All of the shell functions are blocking: they don't return until they're complete.
 
@@ -92,17 +87,19 @@ If the command is a single string, it's passed to a nested shell. If it's an arr
 
 For example, to launch the coffee-script compiler:
 
-```coffeescript
-exec("./node_modules/coffee-script/bin/coffee -o lib/ -c src/").then ->
-  info "done!"
-```
+{% include code-header.html name="af-exec-1" %}
+{% include code/af-exec-1-js.md %}
+{% include code-middle.html name="af-exec-1" %}
+{% include code/af-exec-1-coffee.md %}
+{% include code-footer.html name="af-exec-1" %}
 
 `exec` returns a promise which will be fulfilled with a success or failure, but doesn't block. If you call `exec` twice in a row, *both commands will run at the same time*. This is a limitation of node -- there's currently no way to spawn a process in a blocking way. You can work around this by chaining the promises:
 
-```coffeescript
-exec "something".then ->
-  exec "something else"
-```
+{% include code-header.html name="af-exec-2" %}
+{% include code/af-exec-2-js.md %}
+{% include code-middle.html name="af-exec-2" %}
+{% include code/af-exec-2-coffee.md %}
+{% include code-footer.html name="af-exec-2" %}
 
 
 ## <a name="settings"></a> Settings
@@ -117,13 +114,11 @@ A global `settings` object is available to tasks for configuration. Each field i
 
 For `key=value` pairs, the key can be a dotted path like "mocha.display" to access the nested field "display" on the settings object "mocha". Plugins use dotted paths for namespacing.
 
-```coffeescript
-settings.gcc.warn = "-Wall"
-
-task "compile", run: ->
-  # ...
-  exec "gcc #{settings.gcc.warn} ..."
-```
+{% include code-header.html name="af-settings" %}
+{% include code/af-settings-js.md %}
+{% include code-middle.html name="af-settings" %}
+{% include code/af-settings-coffee.md %}
+{% include code-footer.html name="af-settings" %}
 
 
 ## <a name="project-info"></a> Project info
@@ -153,11 +148,12 @@ Obviously, it's useless to set `rulesFile` once plz is running, and `version` ca
 
 `monitor` allows you to shut off the file watching system, which should cause plz to exit after the current queue of tasks is finished. This is used by the "clean" task to avoid triggering file watches when build products are erased.
 
-```coffeescript
-info "Current color setting: #{plz.useColors()}"
-plz.useColors(false)
-info "Colors are now OFF."
-```
+{% include code-header.html name="af-config" %}
+{% include code/af-config-js.md %}
+{% include code-middle.html name="af-config" %}
+{% include code/af-config-coffee.md %}
+{% include code-footer.html name="af-config" %}
+
 
 ## <a name="tasks"></a> Tasks
 
@@ -170,10 +166,8 @@ The optional filename to `runTask` will add a filename to the list of files that
 
 For example, the task "check" will trigger the task "stop" if a certain file exists:
 
-```coffeescript
-task "check", run: ->
-  if fs.existsSync(STOP_FILENAME) then runTask("stop")
-
-task "stop", run: ->
-  # stop! ...
-```
+{% include code-header.html name="af-tasks" %}
+{% include code/af-tasks-js.md %}
+{% include code-middle.html name="af-tasks" %}
+{% include code/af-tasks-coffee.md %}
+{% include code-footer.html name="af-tasks" %}
