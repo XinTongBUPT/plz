@@ -7,16 +7,17 @@ category: articles
 
 Tasks are defined with the `task` function:
 
-```coffeescript
-task(name, options)
+```javascript
+task(name, options);
 ```
 
 The options object should contain, at minimum, a description and some code to run. For example:
 
-```coffeescript
-task "lucky", description: "calculate your lucky number", run: ->
-  notice "Your lucky number is #{Math.round(Math.random() * 100)}!"
-```
+{% include code-header.html name="wt-intro" %}
+{% include code/wt-intro-js.md %}
+{% include code-middle.html name="wt-intro" %}
+{% include code/wt-intro-coffee.md %}
+{% include code-footer.html name="wt-intro" %}
 
 The description is used in the output of `--help` or `--tasks`:
 
@@ -54,11 +55,11 @@ The `watch` or `watchall` option takes a pattern (or list of patterns) in the st
 
 For example, this task will execute whenever any file in the "images" folder that ends with "jpg" is created or changed:
 
-```coffeescript
-task "images", watch: "images/**/*.jpg", run: (context) ->
-  for filename in context.filenames
-    notice "File #{filename} is an image."
-```
+{% include code-header.html name="wt-watching" %}
+{% include code/wt-watching-js.md %}
+{% include code-middle.html name="wt-watching" %}
+{% include code/wt-watching-coffee.md %}
+{% include code-footer.html name="wt-watching" %}
 
 A `watch` is triggered whenever a file matching that pattern is created or modified. Modified files are detected by size changes or "modification time" changes -- but be aware that some operating systems like OS X and Windows only track file modification times to the nearest second or two.
 
@@ -85,23 +86,19 @@ You may set explicit dependencies between tasks in two ways: `must` or `depends`
 
 A task that *must* run before this task forces the dependent task to be executed whenever this task is. For example, to force the "push" task to verify that the site is healthy first, you might use:
 
-```coffeescript
-task "push", describe: "push new code to production", must: "verify-site", run: ->
-  # ...
-
-task "verify-site", describe: "verify that the production site is healthy", run: ->
-  # ...
-```
+{% include code-header.html name="wt-deps-1" %}
+{% include code/wt-deps-1-js.md %}
+{% include code-middle.html name="wt-deps-1" %}
+{% include code/wt-deps-1-coffee.md %}
+{% include code-footer.html name="wt-deps-1" %}
 
 To enforce a general ordering of tasks that only takes effect if both tasks will be executed, use `depends`. This is useful for hinting that there's an optimal ordering to execute some tasks. For example, changing a source file might trigger both "compile" to re-compile the source, and "test" to run the unit tests. But it would be pointless to run the tests before compiling, since re-compiling will just trigger the tests again, so:
 
-```coffeescript
-task "compile", watch: "src/**/*.c", run: ->
-  # ...
-
-task "test", watch: [ "src/**/*.c", "test/*" ], depends: "compile", run: ->
-  # ...
-```
+{% include code-header.html name="wt-deps-2" %}
+{% include code/wt-deps-2-js.md %}
+{% include code-middle.html name="wt-deps-2" %}
+{% include code/wt-deps-2-coffee.md %}
+{% include code-footer.html name="wt-deps-2" %}
 
 
 ## <a name="before-and-after"></a> Before and after tasks
@@ -110,15 +107,16 @@ A task may ask to run before or after some other task, which will merge the two 
 
 For example, to ensure that all folders are created before compiling:
 
-```coffeescript
-task "make-folders", before: "compile", run: ->
-  mkdir "-p", "target"
-```
+{% include code-header.html name="wt-before-1" %}
+{% include code/wt-before-1-js.md %}
+{% include code-middle.html name="wt-before-1" %}
+{% include code/wt-before-1-coffee.md %}
+{% include code-footer.html name="wt-before-1" %}
 
 `attach` works exactly like `after`, but doesn't require the original task to exist. This is a convenience for letting plugins run code for common tasks without having to test if those tasks exist.
 
-```coffeescript
-task "build-coffee", attach: "build", description: "compile coffee-script source", run: ->
-  mkdir "-p", "lib"
-  exec "coffee -o lib -c src"
-```
+{% include code-header.html name="wt-before-2" %}
+{% include code/wt-before-2-js.md %}
+{% include code-middle.html name="wt-before-2" %}
+{% include code/wt-before-2-coffee.md %}
+{% include code-footer.html name="wt-before-2" %}
