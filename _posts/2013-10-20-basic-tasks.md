@@ -20,8 +20,8 @@ Plz will automatically generate a "clean" task if you define the `clean` setting
 
 For example, if your java compiler puts compiled class files into `build/classes/`:
 
-```coffeescript
-settings.clean = [ "./build/classes" ]
+```javascript
+settings.clean = [ "./build/classes" ];
 ```
 
 "clean" will also turn off file watches (see [Configuration](./available-functions.html#configuration)), so that tasks that were watching the deleted files won't trigger. It also deletes the plz "state file" (usually `.plz/state`) so that the next time plz runs, all watched files will look new.
