@@ -1,7 +1,7 @@
 {
   "name": "plz",
-  "version": "2.0.0",
-  "date": "2013-10-304",
+  "version": "2.0.1",
+  "date": "2013-11-04",
   "description": "simple build automation",
   "keywords": [ "make", "build" ],
   "author": "Robey Pointer <robeypointer@gmail.com>",
