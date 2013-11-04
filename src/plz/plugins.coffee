@@ -38,31 +38,29 @@ findPlugin = (name) ->
 
 
 Natives = Object.keys(process.binding "natives")
-__require = require
+__builtin_require = require
 
 class ModuleLoader
   constructor: ->
     @cache = {}
 
-  load: (code, filename, globals) ->
+  load: (code, filename) ->
     if not code? then code = fs.readFileSync(filename)
     m = new Module(filename)
     m.filename = filename
-    m.sandbox = vm.createContext(globals)
-    m.sandbox.global = globals
+    m.paths = Module._nodeModulePaths(path.dirname(filename))
     @evalInModule(code, filename, m)
     m.exports
 
   # build a "require" method for a module
   makeRequire: (parent) ->
     (name) =>
-      if name in Natives then return __require(name)
+      if name in Natives then return __builtin_require(name)
       filename = Module._resolveFilename(name, parent)
       if @cache[filename]? then return @cache[filename].exports
 
       m = new Module(filename, parent)
       m.filename = filename
-      m.sandbox = parent.sandbox
       try
         @cache[filename] = m
         @evalInModule(fs.readFileSync(filename), filename, m)
@@ -82,11 +80,8 @@ class ModuleLoader
         # might not be coffee-script. try js.
         code
     wrapped = "(function (exports, require, module, __filename, __dirname) {\n#{code}\n});"
-    f = vm.runInContext(wrapped, m.sandbox, filename)
-    require = @makeRequire(m)
-    # it can be convenient to access 'require' from inside the sandbox
-    m.sandbox.global._require = require
-    f(m.exports, require, m, filename, path.dirname(filename))
+    f = vm.runInThisContext(wrapped, filename, false)
+    f(m.exports, @makeRequire(m), m, filename, path.dirname(filename))
 
 
 exports.ModuleLoader = ModuleLoader

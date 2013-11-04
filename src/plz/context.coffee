@@ -54,10 +54,6 @@ exec = (command, options={}) ->
 trace = (args) -> args.map((x) -> util.inspect(x)).join(' ')
 
 defaultGlobals =
-  # copy from node
-  console: console
-  process: process
-  Buffer: Buffer
   Q: Q
   glob: (pattern, options = {}) ->
     deferred = Q.defer()
@@ -81,33 +77,39 @@ defaultGlobals =
   extend: (map1, map2) ->
     for k, v of map2 then map1[k] = v
     map1
+  load: (name) ->
+    plugins.load(name, require)
 
-makeContext = (table) ->
-  globals = {}
-  for k, v of defaultGlobals then globals[k] = v
-  for command in ShellCommands then do (command) ->
-    globals[command] = (args...) ->
-      logging.info "+ #{command} #{trace(args)}"
-      shell[command](args...)
+for command in ShellCommands then do (command) ->
+  defaultGlobals[command] = (args...) ->
+    logging.info "+ #{command} #{trace(args)}"
+    shell[command](args...)
 
-  globals.load = (name) -> plugins.load(name, globals._require)
+# copy a bunch of crap into the global namespace so it's available for rules
+# files and plugins. the "clean" thing to do would be to run scripts/plugins
+# in a new context and put our globals there, but:
+#   1. weird things happen to some globals when you do this (known v8 bug)
+#   2. some globals are secret, like "Object" and "Array": you can't just
+#      copy them out, because you can't *see* them.
+#   3. node's module system doesn't use this mechanism, so other subtle stuff
+#      could be broken. it's basically untested/unused.
+fillGlobals = (table) ->
+  for k, v of defaultGlobals then global[k] = v
 
   # define new task
-  globals.task = (name, options) ->
+  global.task = (name, options) ->
     logging.debug "Defining task: #{name}"
     table.addTask(new task.Task(name, options))
-  globals.runTask = (name, filename = null) ->
+  global.runTask = (name, filename = null) ->
     logging.debug "Triggering task: #{name}"
     table.runner.enqueue(name, filename)
 
-  globals.settings = table.runner.settings
+  global.settings = table.runner.settings
 
   # stub in a "project" object for plugins to play with.
-  globals.project =
+  global.project =
     name: path.basename(process.cwd())
     type: "basic"
 
-  globals
 
-
-exports.makeContext = makeContext
+exports.fillGlobals = fillGlobals

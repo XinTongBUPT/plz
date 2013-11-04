@@ -66,10 +66,10 @@ compileRulesFile = (settings) ->
 compile = (data, settings={}) ->
   table = new TaskTable()
   table.runner.settings = settings
-  globals = context.makeContext(table)
+  context.fillGlobals(table)
   loader = new plugins.ModuleLoader()
-  loader.load("require(\"#{BUILTINS_HOME}\");", "<builtins>", globals)
-  loader.load(data, Config.rulesFile() or "<build.plz>", globals)
+  loader.load("require(\"#{BUILTINS_HOME}\");", "<builtins>")
+  loader.load(data, Config.rulesFile() or "<build.plz>")
   table
 
 
