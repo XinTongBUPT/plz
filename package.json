@@ -1,6 +1,6 @@
 {
   "name": "plz",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "date": "2014-04-22",
   "description": "simple build automation",
   "keywords": [ "make", "build" ],
