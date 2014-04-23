@@ -1,7 +1,7 @@
 {
   "name": "plz",
-  "version": "2.0.1",
-  "date": "2013-11-04",
+  "version": "2.0.2",
+  "date": "2014-04-22",
   "description": "simple build automation",
   "keywords": [ "make", "build" ],
   "author": "Robey Pointer <robeypointer@gmail.com>",
@@ -22,12 +22,12 @@
     "test": "plz test -v --color"
   },
   "dependencies": {
-    "coffee-script": "*",
+    "coffee-script": ">= 1.6.1, < 1.7",
     "glob": "*",
-    "globwatcher": ">= 1.2.2",
+    "globwatcher": "^1.2.3",
     "nopt": "*",
-    "plz-builtins": "*",
-    "q": "*",
+    "plz-builtins": "^2.0.2",
+    "q": "^1.0.1",
     "shelljs": "*",
     "simplesets": "*",
     "sprintf": "*",
