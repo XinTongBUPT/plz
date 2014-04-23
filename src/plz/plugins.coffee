@@ -5,6 +5,9 @@ path = require 'path'
 util = require 'util'
 vm = require 'vm'
 
+# breaking change in coffee-script 1.7
+require 'coffee-script/register'
+
 logging = require("./logging")
 
 plugins = {}
