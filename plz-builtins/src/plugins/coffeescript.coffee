@@ -16,7 +16,7 @@ extend settings,
 
 plugins.coffee = ->
   project.type = "coffee"
-  settings.mocha.options.push "--compilers coffee:coffee-script"
+  settings.mocha.options.push "--compilers coffee:coffee-script/register"
 
   task "build-coffee",
     attach: "build",
