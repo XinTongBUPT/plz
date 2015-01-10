@@ -24,7 +24,7 @@ plugins.coffee = ->
     watch: [ "#{settings.coffee.source}/**/*.coffee" ],
     run: (context) ->
       mkdir "-p", settings.coffee.target
-      exec "#{settings.coffee.bin} -o #{settings.coffee.target} -c #{settings.coffee.source} #{settings.coffee.options.join(' ')}"
+      exec "#{settings.coffee.bin} #{settings.coffee.options.join(' ')} -o #{settings.coffee.target} -c #{settings.coffee.source}"
 
   task "test-coffee",
     attach: "test",
